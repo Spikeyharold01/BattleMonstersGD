@@ -64,8 +64,8 @@ public static class CombatAttacks
             
             if (attacker.MyInventory != null)
             {
-                var weapon = attacker.MyInventory.GetEquippedItem(EquipmentSlot.MainHand);
-                if (weapon != null && weapon.Handedness == WeaponHandedness.TwoHanded)
+                var mountedWeapon = attacker.MyInventory.GetEquippedItem(EquipmentSlot.MainHand);
+                if (mountedWeapon != null && mountedWeapon.Handedness == WeaponHandedness.TwoHanded)
                 {
                     if (mountedController != null && !mountedController.IsGuidingWithKnees) return;
                 }
