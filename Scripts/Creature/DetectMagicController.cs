@@ -6,7 +6,7 @@ using System.Linq;
 // PURPOSE: Manages the state of an active Detect Magic spell on a creature.
 // ATTACH TO: A creature at runtime when they cast Detect Magic (Child Node).
 // =================================================================================================
-public partial class DetectMagicController : GridNode
+public partial class DetectMagicController : Godot.Node
 {
 private CreatureStats caster;
 private float remainingDuration;

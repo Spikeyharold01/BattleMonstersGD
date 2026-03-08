@@ -4,7 +4,7 @@ using Godot;
 // PURPOSE: Manages hazard controllers that are applied dynamically via status effects.
 // ATTACH TO: All creature prefabs (Child Node).
 // =================================================================================================
-public partial class HazardFromStatusController : GridNode
+public partial class HazardFromStatusController : Godot.Node
 {
 // Called by ActionManager.OnTurnStart
 // (Needs integration into ActionManager similar to others)

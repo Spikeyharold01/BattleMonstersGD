@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 // ATTACH TO: All player-controlled creature prefabs (Child Node).
 // =================================================================================================
 
-public partial class PlayerActionController : GridNode
+public partial class PlayerActionController : Godot.Node
 {
 // --- STATE ---
 private PlayerTurnState currentState = PlayerTurnState.AwaitingInput;

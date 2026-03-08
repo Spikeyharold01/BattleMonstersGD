@@ -13,7 +13,7 @@ public partial class EnvironmentTrigger : Resource
 [Export] public string RequiredWeatherKeyword; // "rain", "storm", "snow"
 [Export] public bool RequireNearSurface; // Special check for Adaro logic (within move speed of surface)
 }
-public partial class PassiveEnvironmentBuffController : GridNode
+public partial class PassiveEnvironmentBuffController : Godot.Node
 {
 private CreatureStats myStats;
 

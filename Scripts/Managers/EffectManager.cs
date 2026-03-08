@@ -7,7 +7,7 @@ using System.Collections.Generic;
 // ATTACH TO: A persistent "GameManager" Node.
 // =================================================================================================
 
-public partial class EffectManager : GridNode
+public partial class EffectManager : Godot.Node
 {
     public static EffectManager Instance { get; private set; }
 

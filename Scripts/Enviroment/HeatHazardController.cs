@@ -6,7 +6,7 @@ using System.Linq;
 // ATTACH TO: Creatures at runtime (Child Node).
 // =================================================================================================
 
-public partial class HeatHazardController : GridNode
+public partial class HeatHazardController : Godot.Node
 {
 private CreatureStats myStats;
 private StatusEffect_SO fatiguedFromHeatEffect;

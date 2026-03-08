@@ -5,7 +5,7 @@ using System.Linq;
 // PURPOSE: Manages a fast-moving water hazard that can sweep creatures away.
 // ATTACH TO: An Area3D defining the current's area (Child Node).
 // =================================================================================================
-public partial class PersistentEffect_WaterCurrent : GridNode
+public partial class PersistentEffect_WaterCurrent : Godot.Node
 {
 [ExportGroup("Current Properties")]
 [Export]

@@ -5,7 +5,7 @@ using System.Collections.Generic;
 // FILE: ScryingAwarenessController.cs
 // PURPOSE: Generic long-duration controller that monitors nearby scrying sensors and reports them.
 // =================================================================================================
-public partial class ScryingAwarenessController : GridNode
+public partial class ScryingAwarenessController : Godot.Node
 {
     private CreatureStats owner;
     private float remainingDurationSeconds;

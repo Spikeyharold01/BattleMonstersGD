@@ -58,7 +58,7 @@ public sealed class TravelBiomeMapRuntime
 ///
 /// This is separate from arena map/spawn/win logic.
 /// </summary>
-public partial class TravelBiomeMapBuilder : GridNode
+public partial class TravelBiomeMapBuilder : Godot.Node
 {
     /// <summary>
     /// Build map tiles, spawn points, exit zone, and travel-zone metadata from biome snapshot data.

@@ -6,7 +6,7 @@ using System.Linq;
 // PURPOSE: Manages the current weather state, its visual effects, and its impact on the grid.
 // ATTACH TO: A persistent "GameManager" Node.
 // =================================================================================================
-public partial class WeatherManager : GridNode
+public partial class WeatherManager : Godot.Node
 {
 public static WeatherManager Instance { get; private set; }
 

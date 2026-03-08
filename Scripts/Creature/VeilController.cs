@@ -4,7 +4,7 @@ using Godot;
 // PURPOSE: Manages the visual state of a creature under a Veil illusion.
 // ATTACH TO: Creature Scene (Child Node).
 // =================================================================================================
-public partial class VeilController : GridNode
+public partial class VeilController : Godot.Node
 {
 public CreatureTemplate_SO ApparentTemplate { get; private set; }
 private Node3D currentAppearance;

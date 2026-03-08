@@ -6,7 +6,7 @@ using System.Linq;
 // ATTACH TO: Creatures at runtime (Child Node).
 // =================================================================================================
 public enum ColdSeverity { Cold, Severe, Extreme }
-public partial class ColdHazardController : GridNode
+public partial class ColdHazardController : Godot.Node
 {
 private CreatureStats myStats;
 private StatusEffect_SO fatiguedFromColdEffect;

@@ -6,7 +6,7 @@ using System.Linq;
 // PURPOSE: Tracks HP for a specific status effect (e.g. Encased in Ice, Webbed).
 //          Listens to OnTakeDamage to reduce HP.
 // =================================================================================================
-public partial class BreakableEffectController : GridNode
+public partial class BreakableEffectController : Godot.Node
 {
     private CreatureStats owner;
     private string effectName;

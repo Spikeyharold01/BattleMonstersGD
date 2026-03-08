@@ -6,7 +6,7 @@ using System.Collections.Generic;
 // PURPOSE: Generic Aura logic (Fear, Stench, Fire).
 // ATTACH TO: Creature (Child Node).
 // =================================================================================================
-public partial class PersistentAuraController : GridNode
+public partial class PersistentAuraController : Godot.Node
 {
 	[Export] public string AuraName = "Fear Aura";
 	[Export] public float Radius = 30f;

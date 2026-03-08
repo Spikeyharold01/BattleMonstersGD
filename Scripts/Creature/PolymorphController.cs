@@ -6,7 +6,7 @@ using System.Linq;
 // PURPOSE: Handles the visual swap and item melding for polymorph effects. Cleans itself up
 //          when the associated status effect expires.
 // =================================================================================================
-public partial class PolymorphController : GridNode
+public partial class PolymorphController : Godot.Node
 {
     private CreatureStats myStats;
     private CreatureTemplate_SO originalTemplate;

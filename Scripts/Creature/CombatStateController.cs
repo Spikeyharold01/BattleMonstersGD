@@ -17,7 +17,7 @@ DetectedPresence, // Presence is known from non-visual senses, but direction is 
 KnownSquare, // The specific 5-foot square is known, but not the exact position (still has total concealment).
 Pinpointed // The exact location is known, allowing attacks (though still subject to miss chance).
 }
-public partial class CombatStateController : GridNode
+public partial class CombatStateController : Godot.Node
 {
 private CreatureStats myStats;
 

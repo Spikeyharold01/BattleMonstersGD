@@ -9,7 +9,7 @@ using System.Linq;
 //        Does NOT calculate numeric penalties (handled by Stats/Mover).
 // =================================================================================================
 
-public partial class ActionManager : GridNode
+public partial class ActionManager : Godot.Node
 {
     // --- STATE TRACKERS FOR THE CURRENT TURN ---
     [ExportGroup("Current Turn Action States")]

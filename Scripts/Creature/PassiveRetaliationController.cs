@@ -8,7 +8,7 @@ using System.Collections.Generic;
 // ATTACH TO: Creature Root Node.
 // =================================================================================================
 [GlobalClass]
-public partial class PassiveRetaliationController : GridNode
+public partial class PassiveRetaliationController : Godot.Node
 {
     [Export]
     [Tooltip("The Ability to trigger against the attacker (e.g., Ala Poison, Acid Splash).")]

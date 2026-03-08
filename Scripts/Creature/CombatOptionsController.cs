@@ -10,7 +10,7 @@ using System.Linq;
 /// This component tracks which "combat option" feats (like Power Attack or Combat Expertise)
 /// are currently active for a creature on its turn.
 /// </summary>
-public partial class CombatOptionsController : GridNode
+public partial class CombatOptionsController : Godot.Node
 {
 // A HashSet provides fast lookups to see which feats are currently toggled on.
 private HashSet<Feat_SO> activeOptions = new HashSet<Feat_SO>();

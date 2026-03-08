@@ -5,7 +5,7 @@ using Godot;
 // PURPOSE: Manages the state of a creature that has been swallowed whole.
 // ATTACH TO: Spawned dynamically on the victim.
 // =================================================================================================
-public partial class SwallowedController : GridNode
+public partial class SwallowedController : Godot.Node
 {
     public CreatureStats Swallower { get; private set; }
     private CreatureStats victim;

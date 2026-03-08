@@ -4,7 +4,7 @@ using Godot;
 // PURPOSE: Manages states and reactive checks related to mounted combat.
 // ATTACH TO: All creature prefabs (Child Node).
 // =================================================================================================
-public partial class MountedCombatController : GridNode
+public partial class MountedCombatController : Godot.Node
 {
 // --- CACHED COMPONENTS ---
 private CreatureStats myStats;

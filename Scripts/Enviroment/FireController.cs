@@ -7,7 +7,7 @@ using System.Linq;
 // PURPOSE: Controls fire spread and smoke logic for a specific fire instance or zone.
 // =================================================================================================
 
-public partial class FireController : GridNode
+public partial class FireController : Godot.Node
 {
     // A set of all nodes currently on fire. Using a HashSet for fast lookups.
     private HashSet<GridNode> burningNodes = new HashSet<GridNode>();

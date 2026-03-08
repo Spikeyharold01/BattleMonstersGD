@@ -14,7 +14,7 @@ using System.Collections.Generic;
 /// It acts as a memory, tracking which abilities are currently unavailable and ticking down their
 /// cooldown timers each round.
 /// </summary>
-public partial class AbilityCooldownController : GridNode
+public partial class AbilityCooldownController : Godot.Node
 {
     // A dictionary is used to efficiently store and look up the remaining cooldown duration for each ability.
     // The Key is the Ability_SO resource.

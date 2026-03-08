@@ -6,7 +6,7 @@ using System.Linq;
 // PURPOSE: Generic passive that forces a save vs Status Effect whenever the owner pushes a target.
 // ATTACH TO: Creatures with "Stun on Push" abilities (Child Node).
 // =================================================================================================
-public partial class PassivePushStunController : GridNode
+public partial class PassivePushStunController : Godot.Node
 {
     [Export] public StatusEffect_SO EffectToApply; // e.g. Stunned
     [Export] public int BaseDC = 25;
