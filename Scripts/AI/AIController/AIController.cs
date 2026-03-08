@@ -743,7 +743,7 @@ private bool EvaluateArenaDesertionAndBetrayal()
 	List<CreatureStats> combatants = TurnManager.Instance?.GetAllCombatants() ?? new List<CreatureStats>();
 	int allyCount = combatants.Count(c => c != null && GodotObject.IsInstanceValid(c) && c.IsInGroup("PlayerTeam") == MyStats.IsInGroup("PlayerTeam"));
 	int enemyCount = Mathf.Max(0, combatants.Count - allyCount);
-	float outnumbered = Mathf.Clamp01((enemyCount - allyCount) / 6f);
+	float outnumbered = Mathf.Clamp((enemyCount - allyCount) / 6f, 0f, 1f);
 
 	float authorityModifier = IntelligenceGrowthRuntime.Service.ComputeAuthorityModifierPercent(leader, MyStats);
 

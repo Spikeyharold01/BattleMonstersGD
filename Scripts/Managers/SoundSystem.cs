@@ -336,10 +336,10 @@ public static class SoundSystem
         {
             // Apply a post-aggregation cap to prevent multiplicative stacking exploits.
             // Example: 0.92 * 0.92 * 0.92 can no longer exceed the configured max reduction.
-            float intensityReduction = Mathf.Clamp01(1f - intensityMultiplier);
+            float intensityReduction = Mathf.Clamp(1f - intensityMultiplier, 0f, 1f);
             intensityMultiplier = 1f - Mathf.Min(intensityReduction, aggregateMaximumEffectCap);
 
-            float confidenceReduction = Mathf.Clamp01(1f - confidenceMultiplier);
+            float confidenceReduction = Mathf.Clamp(1f - confidenceMultiplier, 0f, 1f);
             confidenceMultiplier = 1f - Mathf.Min(confidenceReduction, aggregateMaximumEffectCap);
 
             float decayIncrease = Mathf.Max(0f, locationDecayMultiplier - 1f);

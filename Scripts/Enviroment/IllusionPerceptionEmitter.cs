@@ -1,4 +1,4 @@
-sing Godot;
+using Godot;
 
 // =================================================================================================
 // FILE: IllusionPerceptionEmitter.cs (GODOT VERSION)
