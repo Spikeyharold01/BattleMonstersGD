@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 Using Godot;
+=======
+using Godot;
+>>>>>>> fe3487f7574ab6101eaf79b552c11384b597a1f1
 
 // =================================================================================================
 // FILE: IllusionPerceptionEmitter.cs (GODOT VERSION)
