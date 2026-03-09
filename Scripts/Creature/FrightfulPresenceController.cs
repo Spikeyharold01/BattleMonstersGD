@@ -7,7 +7,7 @@ using System.Collections.Generic;
 //          or dynamically whenever the creature makes an offensive action (Attack/Charge).
 // ATTACH TO: Creature Root Node (for creatures that possess Frightful Presence).
 // =================================================================================================
-public partial class FrightfulPresenceController : Godot.Node
+public partial class FrightfulPresenceController : Node
 {
     [Export]
     [Tooltip("The Ability_SO containing the Effect_FrightfulPresence component.")]

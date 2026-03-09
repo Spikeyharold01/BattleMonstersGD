@@ -5,7 +5,7 @@ using System.Collections.Generic;
 // PURPOSE: Manages a creature's in-combat stealth state.
 // ATTACH TO: All creature prefabs (Child Node).
 // =================================================================================================
-public partial class StealthController : Godot.Node
+public partial class StealthController : Node
 {
 private CreatureStats myStats;
 private bool isActivelyHiding;

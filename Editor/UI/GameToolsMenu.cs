@@ -27,7 +27,7 @@ public partial class GameToolsMenu : EditorPlugin
 
     public override void _ExitTree()
     {
-        RemoveToolMenuItem("Game Tools");
+        RemoveToolSubmenuItem("Game Tools");
         if (_popup != null) _popup.QueueFree();
         if (_fileDialog != null) _fileDialog.QueueFree();
     }

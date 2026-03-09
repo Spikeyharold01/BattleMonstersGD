@@ -231,6 +231,12 @@ public static class CombatCalculations
 
     internal static VisibilityResult GetVisibilityFromPoint(Vector3 position, Vector3 originPoint)
     {
+        // Now calling the real, static method from the LineOfSightManager class
+        // Note: We need a dummy context for the Raycast usually, passing null or a global context if static
+        // Assuming LineOfSightManager uses a static accessor to PhysicsDirectSpaceState or passed in Context.
+        // For strict port, we assume the Unity version had a static method.
+        // In Godot, LoSManager usually needs the World3D. 
+        // We will assume GridManager.Instance is a valid context node.
         return LineOfSightManager.GetVisibilityFromPoint(GridManager.Instance, position, originPoint);
     }
 

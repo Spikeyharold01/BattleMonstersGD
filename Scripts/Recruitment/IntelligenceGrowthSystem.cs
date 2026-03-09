@@ -175,7 +175,7 @@ public sealed class IntelligenceSystemManager
     {
         IntelligenceProfileState state = GetOrCreateState(owner);
         float threshold = ComputeThreshold(state.CurrentINT);
-        return threshold <= 0f ? 1f : Mathf.Clamp(state.CognitiveExposure / threshold, 0f, 1f);
+        return threshold <= 0f ? 1f : Mathf.Clamp01(state.CognitiveExposure / threshold);
     }
 
     public IntelligenceUiSnapshot BuildUiSnapshot(CreatureStats owner)
@@ -187,7 +187,7 @@ public sealed class IntelligenceSystemManager
             CurrentINT = state.CurrentINT,
             CurrentExposure = state.CognitiveExposure,
             Threshold = threshold,
-            Progress01 = threshold <= 0f ? 1f : Mathf.Clamp(state.CognitiveExposure / threshold, 0f, 1f)
+            Progress01 = threshold <= 0f ? 1f : Mathf.Clamp01(state.CognitiveExposure / threshold)
         };
     }
 
@@ -196,7 +196,7 @@ public sealed class IntelligenceSystemManager
         IntelligenceProfileState state = GetOrCreateState(owner);
         state.LanguageExposure.TryGetValue(language, out float current);
         float threshold = ComputeLanguageThreshold(state.LanguagesKnown.Count);
-        return threshold <= 0f ? 1f : Mathf.Clamp(current / threshold, 0f, 1f);
+        return threshold <= 0f ? 1f : Mathf.Clamp01(current / threshold);
     }
 
     public bool HasPartialComprehension(CreatureStats owner, Language language)

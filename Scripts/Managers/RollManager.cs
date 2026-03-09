@@ -7,7 +7,7 @@ using System.Linq;
 // ATTACH TO: A persistent "GameManager" Node.
 // =================================================================================================
 
-public partial class RollManager : Godot.Node
+public partial class RollManager : Node
 {
     public static RollManager Instance { get; private set; }
 

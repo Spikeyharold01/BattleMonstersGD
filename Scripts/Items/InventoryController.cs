@@ -44,7 +44,7 @@ public class ItemInstance
 /// <summary>
 /// This component is responsible for holding and managing a creature's inventory.
 /// </summary>
-public partial class InventoryController : Godot.Node
+public partial class InventoryController : Node
 {
     [ExportGroup("Starting Gear")]
     [Export]

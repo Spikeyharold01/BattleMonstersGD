@@ -4,7 +4,7 @@ using Godot;
 // PURPOSE: Global manager for handling fire propagation.
 // ATTACH TO: A persistent "GameManager" Node.
 // =================================================================================================
-public partial class FireManager : Godot.Node
+public partial class FireManager : Node
 {
 public static FireManager Instance { get; private set; }
 

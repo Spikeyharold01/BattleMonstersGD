@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 // ATTACH TO: Creature Root Node.
 // =================================================================================================
 
-public partial class CreatureMover : Godot.Node
+public partial class CreatureMover : Node
 {
     // The visual speed of the creature's movement in units per second.
     [Export] public float MoveSpeed = 5f;
