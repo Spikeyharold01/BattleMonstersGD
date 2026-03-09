@@ -99,7 +99,7 @@ public override float GetAIEstimatedValue(EffectContext context)
 }
 }
 // Helper component for passing template data.
-public partial class CreatureTemplateHolder : GridNode
+public partial class CreatureTemplateHolder : Node
 {
 [Export] public CreatureTemplate_SO Template;
 }

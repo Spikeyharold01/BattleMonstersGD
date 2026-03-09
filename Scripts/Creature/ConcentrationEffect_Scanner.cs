@@ -9,7 +9,7 @@ using System.Linq;
 // =================================================================================================
 public enum ScanType { Magic, Thoughts, Evil, Undead }
 
-public partial class ConcentrationEffect_Scanner : GridNode
+public partial class ConcentrationEffect_Scanner : Node
 {
     private CreatureStats caster;
     private float duration;

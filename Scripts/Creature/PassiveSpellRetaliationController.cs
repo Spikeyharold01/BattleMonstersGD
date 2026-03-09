@@ -8,7 +8,7 @@ using System.Collections.Generic;
 // ATTACH TO: Creature Root Node (The 3D Prefab).
 // =================================================================================================
 [GlobalClass]
-public partial class PassiveSpellRetaliationController : GridNode
+public partial class PassiveSpellRetaliationController : Node
 {
     [Export]
     [Tooltip("The Ability_SO to cast back at the attacker (e.g., Madness Wisdom Drain).")]

@@ -8,7 +8,7 @@ using System.Linq;
 // ATTACH TO: Creature Root Node (as child or main script component).
 // =================================================================================================
 
-public partial class StatusEffectController : GridNode
+public partial class StatusEffectController : Node
 {
     /// ARCHITECTURAL NOTICE:
     /// Traditional level loss / negative levels are replaced with

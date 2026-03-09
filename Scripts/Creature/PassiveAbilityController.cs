@@ -5,7 +5,7 @@ using System.Linq;
 // PURPOSE: Manages passive special abilities that react to game state changes.
 // ATTACH TO: All creature scenes (as a child node of the CreatureStats root).
 // =================================================================================================
-public partial class PassiveAbilityController : GridNode
+public partial class PassiveAbilityController : Node
 {
 private CreatureStats myStats;
 private StatusEffect_SO sickenedEffect;

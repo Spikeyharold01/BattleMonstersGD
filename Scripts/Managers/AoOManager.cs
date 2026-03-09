@@ -28,7 +28,7 @@ public enum ProvokingActionType
 /// It is the central authority for checking if an action provokes, finding which creatures
 /// can make an AoO, and resolving those attacks, interrupting the normal turn flow.
 /// </summary>
-public partial class AoOManager : GridNode
+public partial class AoOManager : Node
 {
     public static AoOManager Instance { get; private set; }
 

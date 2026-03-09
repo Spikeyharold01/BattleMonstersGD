@@ -4,7 +4,7 @@ using Godot;
 // PURPOSE: Manages the state of a sustained Telekinesis spell.
 // ATTACH TO: A creature at runtime when they cast the sustained version of Telekinesis (Child Node).
 // =================================================================================================
-public partial class TelekinesisController : GridNode
+public partial class TelekinesisController : Node
 {
 public int DurationRounds { get; private set; }
 public bool HasConcentratedThisTurn { get; set; } = true; // True for the turn it's cast

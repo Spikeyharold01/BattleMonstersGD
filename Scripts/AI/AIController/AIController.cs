@@ -28,7 +28,7 @@ public int DamageTakenAfterDecision;
 public bool DiedAfterDecision;
 }
 
-public partial class AIController : GridNode
+public partial class AIController : Node
 {
 // --- Cached Component References ---
 public CreatureStats MyStats { get; private set; }

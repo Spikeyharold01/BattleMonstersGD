@@ -5,7 +5,7 @@ sing Godot;
 // PURPOSE: Generic data-driven emitter for illusionary perception channels (sound/scent/thermal proxy).
 // ATTACH TO: Runtime child on illusion nodes that should project sensory cues.
 // =================================================================================================
-public partial class IllusionPerceptionEmitter : GridNode
+public partial class IllusionPerceptionEmitter : Node
 {
     private CreatureStats caster;
 

@@ -13,7 +13,7 @@ using System.Linq;
 /// It finds paths on the 3D grid managed by GridManager, taking into account
 /// the specific movement capabilities of the creature requesting the path.
 /// </summary>
-public partial class Pathfinding : GridNode
+public partial class Pathfinding : Node
 {
     public static Pathfinding Instance { get; private set; }
 
