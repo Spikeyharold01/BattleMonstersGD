@@ -118,7 +118,7 @@ private List<AuraController> FindAurasInCone()
     Vector3 casterPos = casterBody.GlobalPosition;
     Vector3 casterForward = -casterBody.GlobalTransform.Basis.Z; // Forward is -Z in Godot
 
-    foreach (GridNode node in allAuraNodes)
+    foreach (Node node in allAuraNodes)
     {
         if (node is AuraController aura)
         {

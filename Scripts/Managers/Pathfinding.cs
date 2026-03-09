@@ -258,7 +258,7 @@ public partial class Pathfinding : Node
     {
 		// Check Restricted Zones
         var zones = GridManager.Instance.GetTree().GetNodesInGroup("RestrictedZone");
-        foreach(GridNode n in zones)
+        foreach(Node n in zones)
         {
             if (n is RestrictedZoneController zone)
             {

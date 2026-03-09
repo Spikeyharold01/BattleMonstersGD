@@ -45,7 +45,7 @@ public static class SoundSystem
         var tree = Engine.GetMainLoop() as SceneTree;
         if (tree == null) return false;
         var silenceAuras = tree.GetNodesInGroup("SilenceAuras");
-        foreach (GridNode n in silenceAuras)
+        foreach (Node n in silenceAuras)
         {
             if (n is SilenceAuraController aura && aura.IsPointInside(point)) return true;
         }

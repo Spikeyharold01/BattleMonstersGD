@@ -111,7 +111,7 @@ public static class LineOfSightManager
             var hit = spaceState.IntersectRay(query);
             if (hit.Count == 0) return true; // Clear path
 
-            GridNode collider = (GridNode)hit["collider"];
+            Node collider = (Node)hit["collider"];
             
             // Check for StructureTraits component on the collider or its parent
             var structure = collider.GetNodeOrNull<StructureTraits>("StructureTraits") ?? 

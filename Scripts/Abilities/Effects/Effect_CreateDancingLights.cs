@@ -12,7 +12,7 @@ public partial class Effect_CreateDancingLights : AbilityEffectComponent
     {
         // 1. Remove old lights (Rule: "You can only have one... active")
         var existing = context.Caster.GetTree().GetNodesInGroup(OldGroupToRemove);
-        foreach(GridNode n in existing)
+        foreach(Node n in existing)
         {
             if (n is PersistentEffect_DancingLights dl && dl.GetParent() == context.Caster) // Check ownership?
             {

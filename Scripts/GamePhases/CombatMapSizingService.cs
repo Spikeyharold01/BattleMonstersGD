@@ -159,7 +159,7 @@ public static class CombatMapSizingService
         }
 
 var creatures = new List<CreatureStats>();
-        foreach (GridNode node in tree.GetNodesInGroup("Creature"))
+        foreach (Node node in tree.GetNodesInGroup("Creature"))
         {
             if (node is CreatureStats creature && IsValidCombatant(creature))
             {

@@ -324,7 +324,7 @@ public partial class TurnManager : Node
             }
 			// Whirlpool Logic: Check if caught at start of turn
             var whirlpools = GetTree().GetNodesInGroup("Whirlpool");
-            foreach(GridNode n in whirlpools)
+            foreach(Node n in whirlpools)
             {
                 if (n is PersistentEffect_Whirlpool pool) pool.ApplyTurnEffects(currentCombatant);
             }
@@ -336,27 +336,27 @@ public partial class TurnManager : Node
         // --- Events for EVERY turn (Primary and Secondary) ---
 		// --- ADDED: GAZE CHECK ---
 		var gazeControllers = GetTree().GetNodesInGroup("GazeControllers"); // Assuming added to group in editor or Ready
-    foreach(GridNode node in gazeControllers)
+    foreach(Node node in gazeControllers)
     {
         if (node is PassiveGazeController gaze) gaze.HandleGazeCheck(currentCombatant);
     }
 // Generic Aura Check (Fear, Stench, Fire)
         var auraControllers = GetTree().GetNodesInGroup("PersistentAura");
-        foreach(GridNode node in auraControllers)
+        foreach(Node node in auraControllers)
         {
             if (node is PersistentAuraController aura) aura.CheckAuraExposure(currentCombatant);
         }
 
         // Frightful Presence Check (Aura Mode)
         var fpControllers = GetTree().GetNodesInGroup("FrightfulPresenceControllers");
-        foreach(GridNode node in fpControllers)
+        foreach(Node node in fpControllers)
         {
             if (node is FrightfulPresenceController fp) fp.CheckExposure(currentCombatant);
         }
 
          // TRIGGER AUTONOMOUS SPELL ENTITIES OWNED BY CURRENT COMBATANT
         var autonomousEntities = GetTree().GetNodesInGroup("AutonomousEntities");
-        foreach (GridNode node in autonomousEntities)
+        foreach (Node node in autonomousEntities)
         {
             if (node is AutonomousEntityController entity && entity.Caster == currentCombatant)
             {
@@ -436,7 +436,7 @@ public partial class TurnManager : Node
 				activeCombatant.GetNodeOrNull<PassiveSwarmController>("PassiveSwarmController")?.OnTurnEnd();
 				// Whirlpool Logic: Check if they swam
                 var endWhirlpools = GetTree().GetNodesInGroup("Whirlpool");
-                foreach(GridNode n in endWhirlpools)
+                foreach(Node n in endWhirlpools)
                 {
                     if (n is PersistentEffect_Whirlpool pool) pool.OnCreatureTurnEnd(activeCombatant);
                 }
@@ -460,7 +460,7 @@ public partial class TurnManager : Node
             GD.Print("--- NEW ROUND ---");
 
   var summons = GetTree().GetNodesInGroup("SummonedCreatures");
-            foreach (GridNode node in summons)
+            foreach (Node node in summons)
             {
                 if (node is SummonedCreatureController summonController)
                 {

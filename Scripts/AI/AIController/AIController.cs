@@ -839,7 +839,7 @@ private List<AIAction> GeneratePossibleSingleActions()
     List<CreatureStats> visibleTargets = FindVisibleTargets();
 
     var lights = GetTree().GetNodesInGroup("DancingLights");
-    foreach(GridNode n in lights)
+    foreach(Node n in lights)
     {
         if (n is PersistentEffect_DancingLights dl && dl.Caster == MyStats) 
         {
@@ -1389,7 +1389,7 @@ private List<AIAction> GeneratePossibleSingleActions()
         possibleActions.Add(new AIAction_Search(this));
         
         var autonomousEntities = GetTree().GetNodesInGroup("AutonomousEntities");
-        foreach (GridNode node in autonomousEntities)
+        foreach (Node node in autonomousEntities)
         {
             if (node is AutonomousEntityController entity && entity.Caster == MyStats)
             {
