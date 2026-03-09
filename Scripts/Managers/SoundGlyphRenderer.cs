@@ -48,7 +48,7 @@ public partial class SoundGlyphRuntime : Node3D
         glyph.Initialize(sound);
     }
 
-    private sealed class SoundGlyphInstance : Node3D
+    private sealed partial class SoundGlyphInstance : Node3D
     {
         private SoundEvent sound;
         private MeshInstance3D groundCone;

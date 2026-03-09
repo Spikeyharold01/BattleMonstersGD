@@ -1,5 +1,6 @@
 using Godot;
 using System.Collections.Generic;
+using System.Linq;
 
 // =================================================================================================
 // FILE: Effect_FrightfulPresence.cs
@@ -47,7 +48,7 @@ public partial class Effect_FrightfulPresence : AbilityEffectComponent
             }
 
             // Rule: An opponent that succeeds on the saving throw is immune to that same creature’s frightful presence for 24 hours.
-            if (target.MyEffects.HasEffect(immunityName: immunityEffectName))
+            if (target.MyEffects.HasEffect(immunityEffectName))
             {
                 continue;
             }

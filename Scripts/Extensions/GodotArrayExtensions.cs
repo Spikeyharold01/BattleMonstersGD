@@ -1,9 +1,10 @@
+using Godot;
 using System;
 using Godot.Collections;
 
 public static class GodotArrayExtensions
 {
-    public static T Find<T>(this Array<T> source, Predicate<T> match)
+    public static T Find<[MustBeVariant] T>(this Array<T> source, Predicate<T> match)
     {
         if (source == null || match == null)
         {
@@ -21,7 +22,7 @@ public static class GodotArrayExtensions
         return default;
     }
 
-    public static bool Exists<T>(this Array<T> source, Predicate<T> match)
+    public static bool Exists<[MustBeVariant] T>(this Array<T> source, Predicate<T> match)
     {
         if (source == null || match == null)
         {

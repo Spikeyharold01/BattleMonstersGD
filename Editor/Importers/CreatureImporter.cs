@@ -36,7 +36,7 @@ public static class CreatureImporter
 		DataSet result;
 		try
 		{
-			using (var stream = File.Open(filePath, FileMode.Open, FileAccess.Read))
+			using (var stream = File.Open(filePath, FileMode.Open, System.IO.FileAccess.Read))
 			{
 				using (var reader = ExcelReaderFactory.CreateReader(stream))
 				{
@@ -145,16 +145,16 @@ public static class CreatureImporter
 		template.SubTypes = new Godot.Collections.Array<string>();
 		for (int i = 1; i <= 6; i++)
 		{
-			var subs = ImportUtils.ParseStringList(ImportUtils.GetValue(data, $"subtypes_{i}"));
+			var subs = ImportUtils.ParseStringList(ImportUtils.GetValue(data, $"subtypes_{i}", ""));
 			foreach(var s in subs) template.SubTypes.Add(s);
 		}
 		
-		template.RacialLanguages = new Godot.Collections.Array<Language>(ImportUtils.ParseLanguages(ImportUtils.GetValue(data, "languages")));
+		template.RacialLanguages = new Godot.Collections.Array<Language>(ImportUtils.ParseLanguages(ImportUtils.GetValue(data, "languages", "")));
 		
 		template.Classes = new Godot.Collections.Array<string>();
 		for (int i = 1; i <= 3; i++)
 		{
-			string cls = ImportUtils.GetValue(data, $"classes_{i}");
+			string cls = ImportUtils.GetValue(data, $"classes_{i}", "");
 			if (!string.IsNullOrEmpty(cls)) template.Classes.Add(cls);
 		}
 		
@@ -203,7 +203,7 @@ public static class CreatureImporter
 		template.ArmorClass_Total = ImportUtils.GetValue(data, "AC/AC", 10);
 		template.ArmorClass_Touch = ImportUtils.GetValue(data, "AC/touch", 10);
 		template.ArmorClass_FlatFooted = ImportUtils.GetValue(data, "AC/flat_footed", 10);
-		template.AcBreakdown = ParseACBreakdown(data);
+		template.AcBreakdown = string.Join(", ", ParseACBreakdown(data));
 		
 		template.FortitudeSave_Base = ImportUtils.GetSaveBase(ImportUtils.GetValue(data, "saves/fort", 0), template.Constitution);
 		template.ReflexSave_Base = ImportUtils.GetSaveBase(ImportUtils.GetValue(data, "saves/ref", 0), template.Dexterity);
@@ -212,7 +212,7 @@ public static class CreatureImporter
 		template.DamageReductions = new Godot.Collections.Array<DamageReduction>(ParseMultipleDr(data));
 		template.SpellResistance = ImportUtils.GetValue(data, "SR", 0);
 		
-		var immunitiesList = ImportUtils.ParseStringList(ImportUtils.GetValue(data, "immunities"));
+		var immunitiesList = ImportUtils.ParseStringList(ImportUtils.GetValue(data, "immunities", ""));
 		template.Immunities = new Godot.Collections.Array<string>();
 		foreach(var im in immunitiesList) template.Immunities.Add(im);
 
@@ -397,7 +397,7 @@ public static class CreatureImporter
 		var detailedAttacks = ParseDetailedSpecialAttacks(data, $"{abilityPath}/Special", filterPath);
 		foreach(var a in detailedAttacks) template.KnownAbilities.Add(a);
 
-		var sqList = ImportUtils.ParseStringList(ImportUtils.GetValue(data, "special_qualities"));
+		var sqList = ImportUtils.ParseStringList(ImportUtils.GetValue(data, "special_qualities", ""));
 		template.SpecialQualities = new Godot.Collections.Array<string>();
 		foreach(var s in sqList) template.SpecialQualities.Add(s);
 
@@ -426,10 +426,10 @@ public static class CreatureImporter
 		}
 
 		var parsedGear = new List<Item_SO>();
-		parsedGear.AddRange(ItemParser.ParseTreasureString(ImportUtils.GetValue(data, "gear/combat"), itemPath, template, _itemCache));
-		parsedGear.AddRange(ItemParser.ParseTreasureString(ImportUtils.GetValue(data, "gear/other"), itemPath, template, _itemCache));
-		parsedGear.AddRange(ItemParser.ParseTreasureString(ImportUtils.GetValue(data, "gear/gear"), itemPath, template, _itemCache));
-		parsedGear.AddRange(ItemParser.ParseTreasureString(ImportUtils.GetValue(data, "ecology/treasure"), itemPath, template, _itemCache));
+		parsedGear.AddRange(ItemParser.ParseTreasureString(ImportUtils.GetValue(data, "gear/combat", ""), itemPath, template, _itemCache));
+		parsedGear.AddRange(ItemParser.ParseTreasureString(ImportUtils.GetValue(data, "gear/other", ""), itemPath, template, _itemCache));
+		parsedGear.AddRange(ItemParser.ParseTreasureString(ImportUtils.GetValue(data, "gear/gear", ""), itemPath, template, _itemCache));
+		parsedGear.AddRange(ItemParser.ParseTreasureString(ImportUtils.GetValue(data, "ecology/treasure", ""), itemPath, template, _itemCache));
 
 		foreach (var gearItem in parsedGear)
 		{
@@ -470,7 +470,7 @@ public static class CreatureImporter
 			ability = new Ability_SO();
 
 		ability.AbilityName = uniqueName;
-		ability.CasterLevel = int.TryParse(slaData.CL, out int cl_new) ? cl_new : 0;
+		ability.SpellLevel = int.TryParse(slaData.CL, out int cl_new) ? cl_new : 0;
 		ability.School = ImportUtils.ParseEnum(slaData.school, MagicSchool.Universal);
 		ability.ActionCost = ActionType.Standard;
 		ability.Category = AbilityCategory.Spell;

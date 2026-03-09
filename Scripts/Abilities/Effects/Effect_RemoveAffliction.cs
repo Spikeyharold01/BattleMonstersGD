@@ -99,7 +99,7 @@ public partial class Effect_RemoveAffliction : AbilityEffectComponent
                 // Check if target has abilities matching the tag keyword (e.g. "Poison")
                 string keyword = TagToRemove.ToString();
                 bool isSource = target.Template.SpecialAttacks.Any(a => a.AbilityName.Contains(keyword, System.StringComparison.OrdinalIgnoreCase)) ||
-                                target.Template.MeleeAttacks.Any(m => m.SpecialQualities.Contains(keyword, System.StringComparison.OrdinalIgnoreCase));
+                                target.Template.MeleeAttacks.Any(m => m.SpecialQualities.Any(q => string.Equals(q, keyword, System.StringComparison.OrdinalIgnoreCase)));
 
                 if (isSource)
                 {

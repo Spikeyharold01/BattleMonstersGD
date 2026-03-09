@@ -23,7 +23,7 @@ public partial class TravelExitZone : Area3D
     /// <summary>
     /// If entering body is in Player group, emit completion signal.
     /// </summary>
-    private void OnBodyEntered(GridNode body)
+    private void OnBodyEntered(Node3D body)
     {
         if (body.IsInGroup("Player"))
         {
