@@ -8,7 +8,7 @@ using System.Linq;
 // ATTACH TO: A persistent "GameManager" Node.
 // =================================================================================================
 
-public partial class IllusionManager : Godot.Node
+public partial class IllusionManager : GridNode
 {
     public static IllusionManager Instance { get; private set; }
 

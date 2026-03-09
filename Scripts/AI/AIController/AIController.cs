@@ -28,7 +28,7 @@ public int DamageTakenAfterDecision;
 public bool DiedAfterDecision;
 }
 
-public partial class AIController : Godot.Node
+public partial class AIController : GridNode
 {
 // --- Cached Component References ---
 public CreatureStats MyStats { get; private set; }
@@ -743,7 +743,7 @@ private bool EvaluateArenaDesertionAndBetrayal()
 	List<CreatureStats> combatants = TurnManager.Instance?.GetAllCombatants() ?? new List<CreatureStats>();
 	int allyCount = combatants.Count(c => c != null && GodotObject.IsInstanceValid(c) && c.IsInGroup("PlayerTeam") == MyStats.IsInGroup("PlayerTeam"));
 	int enemyCount = Mathf.Max(0, combatants.Count - allyCount);
-	float outnumbered = Mathf.Clamp((enemyCount - allyCount) / 6f, 0f, 1f);
+	float outnumbered = Mathf.Clamp01((enemyCount - allyCount) / 6f);
 
 	float authorityModifier = IntelligenceGrowthRuntime.Service.ComputeAuthorityModifierPercent(leader, MyStats);
 
@@ -835,831 +835,831 @@ private string BuildSupportReason(TurnPlan chosenPlan)
 
 private List<AIAction> GeneratePossibleSingleActions()
 {
-	List<AIAction> possibleActions = new List<AIAction>();
-	List<CreatureStats> visibleTargets = FindVisibleTargets();
+    List<AIAction> possibleActions = new List<AIAction>();
+    List<CreatureStats> visibleTargets = FindVisibleTargets();
 
-	var lights = GetTree().GetNodesInGroup("DancingLights");
-	foreach(GridNode n in lights)
-	{
-		if (n is PersistentEffect_DancingLights dl && dl.Caster == MyStats) 
-		{
-			var enemies = FindVisibleTargets(); 
-			foreach(var e in enemies)
-			{
-				var node = GridManager.Instance.NodeFromWorldPoint(e.GlobalPosition);
-				if (GridManager.Instance.GetEffectiveLightLevel(node) == 0)
+    var lights = GetTree().GetNodesInGroup("DancingLights");
+    foreach(GridNode n in lights)
+    {
+        if (n is PersistentEffect_DancingLights dl && dl.Caster == MyStats) 
+        {
+            var enemies = FindVisibleTargets(); 
+            foreach(var e in enemies)
+            {
+                var node = GridManager.Instance.NodeFromWorldPoint(e.GlobalPosition);
+                if (GridManager.Instance.GetEffectiveLightLevel(node) == 0)
+                {
+                    // Found a target in darkness!
+                }
+            }
+        }
+    } // <-- THIS BRACKET WAS MISSING!
+
+    if (MyStats.MyEffects.HasCondition(Condition.Concentrating))
+    {
+        bool isEffective = false;
+        foreach(var enemy in visibleTargets)
+        {
+            if (enemy.MyEffects.ActiveEffects.Any(e => 
+                e.EffectData.ConditionApplied == Condition.Fascinated && 
+                e.SourceCreature == MyStats))
+            {
+                isEffective = true;
+                break;
+            }
+        }
+
+        if (isEffective)
+        {
+            var concentrate = new AIAction_Concentrate(this);
+            concentrate.BoostScore(100f, " (Maintain Control)");
+            possibleActions.Add(concentrate);
+            return possibleActions; 
+        }
+    }
+
+    var helplessTarget = visibleTargets.FirstOrDefault(t => t.MyEffects.HasCondition(Condition.Helpless));
+    if (helplessTarget != null && MyActionManager.CanPerformAction(ActionType.FullRound) && GetParent<Node3D>().GlobalPosition.DistanceTo(helplessTarget.GlobalPosition) <= MyStats.GetEffectiveReach((Item_SO)null).max)
+    {
+        var coupDeGraceAbility = GD.Load<Ability_SO>("res://Data/Abilities/SkillActions/Action_CoupDeGrace.tres");
+        if (coupDeGraceAbility != null)
+        {
+            possibleActions.Add(new AIAction_CoupDeGrace(this, helplessTarget, coupDeGraceAbility));
+        }
+    }
+
+    if (MyStats.MyEffects.HasCondition(Condition.Panicked) || MyStats.MyEffects.HasCondition(Condition.Frightened))
+    {
+        possibleActions.Add(new AIAction_Flee(this));
+        return possibleActions;
+    }
+    
+     if (MyStats.MyEffects.HasCondition(Condition.Pinned))
+    {
+        var escapePinAbility = MyStats.AvailableSkillActions.FirstOrDefault(a => a.AbilityName == "Escape Pin");
+        if (escapePinAbility != null && MyActionManager.CanPerformAction(escapePinAbility.ActionCost))
+        {
+            possibleActions.Add(new AIAction_CastGenericAbility(this, escapePinAbility, MyStats, GetParent<Node3D>().GlobalPosition));
+        }
+        possibleActions.Add(new AIAction_BreakGrapple(this));
+        return possibleActions; 
+    }
+    
+    if (MyStats.CurrentGrappleState != null)
+    {
+        if (MyStats.CurrentGrappleState.Controller == MyStats) 
+        {
+            possibleActions.Add(new AIAction_MaintainGrapple(this));
+        }
+        else if (MyStats.MyEffects.HasCondition(Condition.Grappled))
+        {
+            possibleActions.Add(new AIAction_BreakGrapple(this));
+            var escapeGrappleAbility = MyStats.AvailableSkillActions.FirstOrDefault(a => a.AbilityName == "Escape Grapple");
+            if (escapeGrappleAbility != null && MyActionManager.CanPerformAction(escapeGrappleAbility.ActionCost))
+            {
+                possibleActions.Add(new AIAction_CastGenericAbility(this, escapeGrappleAbility, MyStats, GetParent<Node3D>().GlobalPosition));
+            }
+        }
+
+        var allAbilities = MyStats.Template.KnownAbilities.Concat(MyStats.AvailableSkillActions).ToList();
+        foreach(var ability in allAbilities)
+        {
+            if (MyActionManager.CanPerformAction(ability))
+            {
+                if(ability.TargetType == TargetType.Self)
+                {
+                    possibleActions.Add(new AIAction_CastGenericAbility(this, ability, MyStats, GetParent<Node3D>().GlobalPosition));
+                }
+            }
+        }
+
+        var target = MyStats.CurrentGrappleState?.Target == MyStats ? MyStats.CurrentGrappleState?.Controller : MyStats.CurrentGrappleState?.Target;
+        if (target != null)
+        {
+            var weapon = MyStats.MyInventory?.GetEquippedItem(EquipmentSlot.MainHand);
+            if (weapon != null && weapon.Handedness != WeaponHandedness.TwoHanded)
+            {
+                var attackAbility = new Ability_SO();
+                attackAbility.AbilityName = weapon.ItemName;
+                possibleActions.Add(new AIAction_Attack(this, target, attackAbility, null));
+            }
+            if (MyStats.Template.MeleeAttacks.Any())
+            {
+                foreach (var naturalAttack in MyStats.Template.MeleeAttacks)
+                {
+                    possibleActions.Add(new AIAction_SingleNaturalAttack(this, target, naturalAttack));
+                }
+            }
+        }
+        return possibleActions; 
+    }
+
+    var detectMagicController = GetParent().GetNodeOrNull<DetectMagicController>("DetectMagicController");
+    if (detectMagicController != null && MyActionManager.CanPerformAction(ActionType.Standard))
+    {
+        possibleActions.Add(new AIAction_Concentrate(this));
+    }
+
+    var waterBreathingSpell = MyStats.Template.KnownAbilities.FirstOrDefault(a => a.AbilityName == "Water Breathing");
+    if (waterBreathingSpell != null && MyActionManager.CanPerformAction(waterBreathingSpell.ActionCost))
+    {
+        var primaryTarget = GetPerceivedHighestThreat();
+        if (primaryTarget != null)
+        {
+            var path = Pathfinding.Instance.FindPath(MyStats, GetParent<Node3D>().GlobalPosition, primaryTarget.GlobalPosition);
+            if (path != null && path.Any(p => GridManager.Instance.NodeFromWorldPoint(p).terrainType == TerrainType.Water))
+            {
+                if (!MyStats.MyEffects.HasEffect("Water Breathing"))
+                {
+                    possibleActions.Add(new AIAction_CastGenericAbility(this, waterBreathingSpell, MyStats, GetParent<Node3D>().GlobalPosition));
+                }
+            }
+        }
+    }
+
+    var allPossibleAbilities2 = MyStats.Template.KnownAbilities.Concat(MyStats.AvailableSkillActions).ToList();
+    if (allPossibleAbilities2 != null)
+    {
+        foreach (var ability in allPossibleAbilities2)
+        {
+            if (!MyActionManager.CanPerformAction(ability) || !MyStats.MyUsage.HasUsesRemaining(ability)) continue;
+
+            var weatherEffect = ability.EffectComponents.OfType<Effect_ControlWeather>().FirstOrDefault();
+            if (weatherEffect != null && weatherEffect.AllowedWeathers.Count > 0)
+            {
+                foreach (var weatherOption in weatherEffect.AllowedWeathers)
+                {
+                    var action = new AIAction_CastGenericAbility(this, ability, MyStats, GetParent<Node3D>().GlobalPosition, CommandWord.None, false, weatherOption);
+                    action.Name = $"Cast {ability.AbilityName} ({weatherOption.WeatherName})";
+                    possibleActions.Add(action);
+
+                    if (ability.IsMythicCapable && MyStats.HasMythicPower())
+                    {
+                        var mythicAction = new AIAction_CastGenericAbility(this, ability, MyStats, GetParent<Node3D>().GlobalPosition, CommandWord.None, true, weatherOption);
+                        mythicAction.Name = $"Cast {ability.AbilityName} (Mythic {weatherOption.WeatherName})";
+                        possibleActions.Add(mythicAction);
+                    }
+                }
+                continue; 
+            }
+
+            var beastShapeEffect = ability.EffectComponents.OfType<Effect_BeastShape>().FirstOrDefault();
+            if (beastShapeEffect != null && beastShapeEffect.AllowedForms.Count > 0)
+            {
+                foreach (var formOption in beastShapeEffect.AllowedForms)
+                {
+                    var action = new AIAction_CastGenericAbility(this, ability, MyStats, GetParent<Node3D>().GlobalPosition, CommandWord.None, false, formOption);
+                    action.Name = $"Cast {ability.AbilityName} ({formOption.CreatureName})";
+                    possibleActions.Add(action);
+
+                    if (ability.IsMythicCapable && MyStats.HasMythicPower())
+                    {
+                        var mythicAction = new AIAction_CastGenericAbility(this, ability, MyStats, GetParent<Node3D>().GlobalPosition, CommandWord.None, true, formOption);
+                        mythicAction.Name = $"Cast {ability.AbilityName} (Mythic {formOption.CreatureName})";
+                        possibleActions.Add(mythicAction);
+                    }
+                }
+                continue;
+            }
+
+             if (ability.AvailableCommands != null && ability.AvailableCommands.Any())
+            {
+                foreach (var command in ability.AvailableCommands)
+                {
+                    if (ability.TargetType == TargetType.SingleEnemy)
+                    {
+                        foreach (var target in visibleTargets)
+                        {
+                            if (GetParent<Node3D>().GlobalPosition.DistanceTo(target.GlobalPosition) <= ability.Range.GetRange(MyStats))
+                            {
+                                possibleActions.Add(new AIAction_CastGenericAbility(this, ability, target, target.GlobalPosition, command));
+                            }
+                        }
+                    }
+                }
+                continue; 
+            }
+            
+             var myProjectedImage = TurnManager.Instance.GetAllCombatants().FirstOrDefault(c => c.IsProjectedImage && c.Caster == MyStats);
+            if (myProjectedImage != null && ability.Range.GetRange(MyStats) > 0) 
+            {
+                Vector3 imagePosition = myProjectedImage.GlobalPosition;
+                if (ability.TargetType == TargetType.SingleEnemy)
+                {
+                    foreach (var target in visibleTargets)
+                    {
+                        if (imagePosition.DistanceTo(target.GlobalPosition) <= ability.Range.GetRange(MyStats))
+                        {
+                            var castAction = new AIAction_CastGenericAbility(this, ability, target, target.GlobalPosition);
+                            castAction.Name = $"[From Image] {castAction.Name}";
+                            possibleActions.Add(castAction);
+                        }
+                    }
+                }
+            }
+
+            switch (ability.TargetType)
+            {
+               case TargetType.Self:
+                 if (ability.AbilityName == "Dimension Door")
+                    {
+                        var doorDestinations = GetDimensionDoorDestinations(ability, visibleTargets);
+                        foreach (var destination in doorDestinations)
+                        {
+                            possibleActions.Add(new AIAction_CastGenericAbility(this, ability, MyStats, destination));
+                        }
+                        break;
+                    }
+
+                    possibleActions.Add(new AIAction_CastGenericAbility(this, ability, MyStats, GetParent<Node3D>().GlobalPosition));
+                    if (ability.IsMythicCapable && MyStats.HasMythicPower())
+                    {
+                        possibleActions.Add(new AIAction_CastGenericAbility(this, ability, MyStats, GetParent<Node3D>().GlobalPosition, CommandWord.None, true));
+                    }
+                    break;
+                case TargetType.SingleAlly:
+                    var allAllies = FindAllies();
+                    allAllies.Add(MyStats);
+                    foreach (var ally in allAllies)
+                    {
+                        if (GetParent<Node3D>().GlobalPosition.DistanceTo(ally.GlobalPosition) <= ability.Range.GetRange(MyStats))
+                        {
+                            possibleActions.Add(new AIAction_CastGenericAbility(this, ability, ally, ally.GlobalPosition));
+                            if (ability.IsMythicCapable && MyStats.HasMythicPower())
+                            {
+                                possibleActions.Add(new AIAction_CastGenericAbility(this, ability, ally, ally.GlobalPosition, CommandWord.None, true));
+                            }
+                        }
+                    }
+                    break;
+                case TargetType.SingleEnemy:
+                    var candidateTargets = visibleTargets;
+                    if (ability.AbilityName == "Discern Location")
+                    {
+                        candidateTargets = GetDiscernLocationCandidates();
+                    }
+
+                    foreach (var target in candidateTargets)
+                    {
+                        if (GetParent<Node3D>().GlobalPosition.DistanceTo(target.GlobalPosition) <= ability.Range.GetRange(MyStats))
+                        {
+                            possibleActions.Add(new AIAction_CastGenericAbility(this, ability, target, target.GlobalPosition));
+                            if (ability.IsMythicCapable && MyStats.HasMythicPower())
+                            {
+                                possibleActions.Add(new AIAction_CastGenericAbility(this, ability, target, target.GlobalPosition, CommandWord.None, true));
+                            }
+                        }
+                    }
+                     if (ability.EntityType == TargetableEntityType.ObjectsOnly || ability.EntityType == TargetableEntityType.CreaturesAndObjects)
+                    {
+                        var nearbyObjects = GetTree().GetNodesInGroup("ObjectDurability").Cast<ObjectDurability>()
+                            .Where(o => GetParent<Node3D>().GlobalPosition.DistanceTo(o.GlobalPosition) <= ability.Range.GetRange(MyStats))
+                            .ToList();
+                        foreach (var obj in nearbyObjects)
+                        {
+                            possibleActions.Add(new AIAction_CastGenericAbility(this, ability, null, obj.GlobalPosition, CommandWord.None, false, null, obj));
+                        }
+                    }
+                    break;
+               case TargetType.Area_AlliesOnly:
+                case TargetType.Area_EnemiesOnly:
+                case TargetType.Area_FriendOrFoe:
+                    if (ability.AreaOfEffect.Shape == AoEShape.Burst || 
+                        ability.AreaOfEffect.Shape == AoEShape.Emanation || 
+                        ability.AreaOfEffect.Shape == AoEShape.Cylinder)
+                    {
+                         possibleActions.Add(new AIAction_CastGenericAbility(this, ability, null, GetParent<Node3D>().GlobalPosition));
+                         if (ability.IsMythicCapable && MyStats.HasMythicPower())
+                         {
+                            possibleActions.Add(new AIAction_CastGenericAbility(this, ability, null, GetParent<Node3D>().GlobalPosition, CommandWord.None, true));
+                         }
+                    }
+                    else 
+                    {
+                        var outcome = AISpatialAnalysis.FindBestPlacementForAreaEffect(MyStats, ability);
+                        if (outcome.EnemiesHit.Any() || outcome.AlliesHit.Any())
+                        {
+                            possibleActions.Add(new AIAction_CastGenericAbility(this, ability, null, outcome.AimPoint));
+                            if (ability.IsMythicCapable && MyStats.HasMythicPower())
+                            {
+                                possibleActions.Add(new AIAction_CastGenericAbility(this, ability, null, outcome.AimPoint, CommandWord.None, true));
+                            }
+                        }
+                    }
+                    break;
+            }
+        }
+    }
+    
+    if (MyActionManager.CanPerformAction(ActionType.FiveFootStep))
+    {
+        GridNode currentNode = GridManager.Instance.NodeFromWorldPoint(GetParent<Node3D>().GlobalPosition);
+        List<GridNode> adjacentNodes = GridManager.Instance.GetNeighbours(currentNode);
+        foreach(var neighbor in adjacentNodes)
+        {
+            if (neighbor.movementCost > neighbor.baseMovementCost || (neighbor.terrainType != TerrainType.Ground && neighbor.terrainType != TerrainType.Water))
+            {
+                continue;
+            }
+            possibleActions.Add(new AIAction_FiveFootStep(this, neighbor.worldPosition));
+        }
+    }
+    
+    bool hasMeleeCapability = (MyStats.MyInventory?.GetEquippedItem(EquipmentSlot.MainHand) != null) || (MyStats.Template.MeleeAttacks.Any());
+    
+    if (MyActionManager.CanPerformAction(ActionType.FullRound) && hasMeleeCapability)
+    {
+        bool canFlurry = MyStats.Template.Classes.Any(c => c.ToLower().Contains("monk"));
+        var weapon = MyStats.MyInventory?.GetEquippedItem(EquipmentSlot.MainHand);
+
+        foreach (var target in visibleTargets)
+        {
+             if (GetParent<Node3D>().GlobalPosition.DistanceTo(target.GlobalPosition) <= MyStats.GetEffectiveReach((Item_SO)null).max)
+            {
+                if (canFlurry && (weapon == null || weapon.IsMonkWeapon))
+                {
+                    possibleActions.Add(new AIAction_FlurryOfBlows(this, target));
+                }
+
+                possibleActions.Add(new AIAction_FullAttack(this, target, null));
+                var powerAttackFeat = MyStats.Template.Feats.FirstOrDefault(f => f.Feat.FeatName == "Power Attack");
+                if (powerAttackFeat != null)
+                {
+                    possibleActions.Add(new AIAction_FullAttack(this, target, powerAttackFeat.Feat));
+                }
+            }
+        }
+    }
+    
+    if (MyActionManager.CanPerformAction(ActionType.Standard))
+    {
+        var weapon = MyStats.MyInventory?.GetEquippedItem(EquipmentSlot.MainHand);
+        if (weapon != null)
+        {
+            var weaponAttackAbility = new Ability_SO();
+            weaponAttackAbility.AbilityName = weapon.ItemName;
+            weaponAttackAbility.ActionCost = ActionType.Standard;
+            foreach (var target in visibleTargets)
+            {
+                if (GetParent<Node3D>().GlobalPosition.DistanceTo(target.GlobalPosition) <= MyStats.GetEffectiveReach((Item_SO)null).max)
+                {
+                    possibleActions.Add(new AIAction_Attack(this, target, weaponAttackAbility, null));
+                    var powerAttackFeat = MyStats.Template.Feats.FirstOrDefault(f => f.Feat.FeatName == "Power Attack");
+                    if (powerAttackFeat != null)
+                    {
+                        possibleActions.Add(new AIAction_Attack(this, target, weaponAttackAbility, powerAttackFeat.Feat));
+                    }
+                }
+            }
+             if (MyStats.HasFeat("Vital Strike"))
+            {
+                foreach (var target in visibleTargets)
+                {
+                    if (GetParent<Node3D>().GlobalPosition.DistanceTo(target.GlobalPosition) <= MyStats.GetEffectiveReach((Item_SO)null).max)
+                    {
+                        possibleActions.Add(new AIAction_VitalStrike(this, target));
+                    }
+                }
+            }
+        }
+        else if (MyStats.Template.MeleeAttacks.Any())
+        {
+            foreach (var naturalAttack in MyStats.Template.MeleeAttacks.Where(na => na.IsPrimary))
+            {
+                 foreach (var target in visibleTargets)
+                 {
+                    if (GetParent<Node3D>().GlobalPosition.DistanceTo(target.GlobalPosition) <= MyStats.GetEffectiveReach((NaturalAttack)null).max)
+                    {
+                        possibleActions.Add(new AIAction_SingleNaturalAttack(this, target, naturalAttack));
+                    }
+                 }
+            }
+        }
+        var rangedWeapon = MyStats.MyInventory?.GetEquippedItem(EquipmentSlot.MainHand);
+        if (rangedWeapon != null && rangedWeapon.WeaponType != WeaponType.Melee)
+        {
+            foreach (var target in visibleTargets)
+            {
+                if (GetParent<Node3D>().GlobalPosition.DistanceTo(target.GlobalPosition) <= rangedWeapon.RangeIncrement * 10)
+                {
+                    possibleActions.Add(new AIAction_RangedAttack(this, target, rangedWeapon, null));
+                    var deadlyAimFeat = MyStats.Template.Feats.FirstOrDefault(f => f.Feat.FeatName == "Deadly Aim");
+                    if (deadlyAimFeat != null)
+                    {
+                        possibleActions.Add(new AIAction_RangedAttack(this, target, rangedWeapon, deadlyAimFeat.Feat));
+                    }
+                }
+            }
+        }
+          else if (rangedWeapon != null && rangedWeapon.WeaponType == WeaponType.Melee && rangedWeapon.RangeIncrement <= 0)
+        {
+            var throwImprovisedAbility = GD.Load<Ability_SO>("res://Data/Abilities/SkillActions/Action_ThrowImprovised.tres");
+            if (throwImprovisedAbility != null)
+            {
+                foreach (var target in visibleTargets)
+                {
+                    possibleActions.Add(new AIAction_ThrowImprovised(this, target, rangedWeapon, throwImprovisedAbility));
+                }
+            }
+        }
+        
+        var awesomeBlowFeat = MyStats.Template.Feats.FirstOrDefault(f => f.Feat.FeatName == "Awesome Blow");
+         if (awesomeBlowFeat != null && awesomeBlowFeat.Feat.AssociatedAbility != null)
+        {
+            foreach (var target in visibleTargets)
+            {
+                if (GetParent<Node3D>().GlobalPosition.DistanceTo(target.GlobalPosition) <= MyStats.GetEffectiveReach((Item_SO)null).max && target.Template.Size < MyStats.Template.Size)
+                {
+                    possibleActions.Add(new AIAction_AwesomeBlow(this, target, awesomeBlowFeat.Feat.AssociatedAbility));
+                }
+            }
+        }
+        
+        var allCombatants = TurnManager.Instance?.GetAllCombatants() ?? new System.Collections.Generic.List<CreatureStats>();
+        foreach (var potentialVictim in allCombatants)
+        {
+            if (GetParent<Node3D>().GlobalPosition.DistanceTo(potentialVictim.GlobalPosition) <= MyStats.GetEffectiveReach((Item_SO)null).max)
+            {
+                bool isHelpless = potentialVictim.MyEffects.HasCondition(Condition.Helpless) || potentialVictim.MyEffects.HasCondition(Condition.Unconscious);
+                bool isAlly = potentialVictim.IsInGroup("Player") == MyStats.IsInGroup("Player");
+                if (isHelpless || isAlly) possibleActions.Add(new AIAction_BindSoulEngine(this, potentialVictim));
+            }
+        }
+
+        foreach (var target in visibleTargets)
+        {
+            if (GetParent<Node3D>().GlobalPosition.DistanceTo(target.GlobalPosition) <= MyStats.GetEffectiveReach((Item_SO)null).max)
+            {
+                var soulEngine = target.GetNodeOrNull<SoulEngineController>("SoulEngineController");
+                if (soulEngine != null && soulEngine.IsBodyAttached)
+                {
+                    possibleActions.Add(new AIAction_PrySoulEngine(this, target));
+                }
+            }
+        }
+    }
+    
+     if (MyActionManager.CanPerformAction(ActionType.Standard))
+    {
+        possibleActions.Add(new AIAction_TotalDefense(this));
+    }
+
+    var attackActionsToWrap = possibleActions.Where(a => a is AIAction_Attack || a is AIAction_FullAttack || a is AIAction_SingleNaturalAttack).ToList();
+    foreach (var attack in attackActionsToWrap)
+    {
+        possibleActions.Add(new AIAction_FightDefensively(this, attack));
+    }
+
+    if (MyActionManager.CanPerformAction(ActionType.Standard))
+    {
+        var bestStandardAttack = possibleActions
+            .Where(a => a is AIAction_Attack || a is AIAction_SingleNaturalAttack)
+            .OrderByDescending(a => a.Score)
+            .FirstOrDefault();
+
+        if (bestStandardAttack != null && bestStandardAttack.GetTarget() != null)
+        {
+            possibleActions.Add(new AIAction_Feint(this, bestStandardAttack.GetTarget(), bestStandardAttack));
+        }
+    }
+
+    if (MyActionManager.CanPerformAction(ActionType.FullRound))
+    {
+        var feignAbility = MyStats.Template.KnownAbilities.FirstOrDefault(a => a.AbilityName == "Feign Harmlessness");
+        if (feignAbility != null)
+        {
+            var highestThreat = GetPerceivedHighestThreat();
+            if (highestThreat != null)
+            {
+                possibleActions.Add(new AIAction_CastGenericAbility(this, feignAbility, highestThreat, highestThreat.GlobalPosition));
+            }
+        }
+    }
+
+    if (MyStats.IsMounted)
+    {
+        if (MyStats.AvailableSkillActions.Any(a => a.AbilityName == "Spur Mount") && MyActionManager.CanPerformAction(ActionType.Move))
+            possibleActions.Add(new AIAction_SpurMount(this));
+        if (MyStats.AvailableSkillActions.Any(a => a.AbilityName == "Use Mount as Cover") && MyActionManager.CanPerformAction(ActionType.Immediate))
+            possibleActions.Add(new AIAction_UseMountAsCover(this));
+        if (MyStats.AvailableSkillActions.Any(a => a.AbilityName == "Recover from Cover") && MyActionManager.CanPerformAction(ActionType.Move))
+            possibleActions.Add(new AIAction_RecoverFromCover(this));
+        if (MyStats.AvailableSkillActions.Any(a => a.AbilityName == "Dismount") && MyActionManager.CanPerformAction(ActionType.Move))
+            possibleActions.Add(new AIAction_Dismount(this));
+    }
+    else
+    {
+        if (MyStats.AvailableSkillActions.Any(a => a.AbilityName == "Mount") && MyActionManager.CanPerformAction(ActionType.Move))
+        {
+            var potentialMounts = FindAllies().Where(ally => MyStats.Mount(ally, isCheckOnly: true)).ToList();
+            foreach (var mount in potentialMounts)
+            {
+                if (GetParent<Node3D>().GlobalPosition.DistanceTo(mount.GlobalPosition) <= MyMover.GetEffectiveMovementSpeed() + 5f)
+                {
+                    possibleActions.Add(new AIAction_Mount(this, mount));
+                }
+            }
+        }
+    }
+    
+    if (MyActionManager.CanPerformAction(ActionType.Standard))
+    {
+        if (MyStats.MyInventory.GetEquippedItem(EquipmentSlot.MainHand) == null)
+        {
+            var adherers = visibleTargets.Where(t => t.GetNodeOrNull<PassiveAdhesiveController>("PassiveAdhesiveController") != null).ToList();
+            foreach (var adherer in adherers)
+            {
+                var stuckItems = ItemManager.Instance.GetItemsInRadius(adherer.GlobalPosition, 1.0f);
+                foreach (var item in stuckItems)
+                {
+                    if (item.ItemData.ItemType == ItemType.Weapon)
+                    {
+                        if (GetParent<Node3D>().GlobalPosition.DistanceTo(adherer.GlobalPosition) <= MyStats.GetEffectiveReach((Item_SO)null).max)
+                        {
+                            possibleActions.Add(new AIAction_RetrieveStuckWeapon(this, item, adherer));
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    if (MyActionManager.CanPerformAction(ActionType.Move))
+    {
+        possibleActions.Add(new AIAction_Search(this));
+        
+        var autonomousEntities = GetTree().GetNodesInGroup("AutonomousEntities");
+        foreach (GridNode node in autonomousEntities)
+        {
+            if (node is AutonomousEntityController entity && entity.Caster == MyStats)
+            {
+                var highestThreat = GetPerceivedHighestThreat();
+                if (highestThreat != null)
+                {
+                    possibleActions.Add(new AIAction_RedirectAutonomousEntity(this, entity, highestThreat));
+                }
+            }
+        }
+        if (MyStats.Template.HasScent && !CombatMemory.HasCheckedScentDirection(MyStats))
+        {
+            var smelled = CombatMemory.GetSmelledEnemies(MyStats);
+            var unknownLocationEnemies = smelled.Where(e => 
+                GetParent().GetNode<CombatStateController>("CombatStateController").GetLocationStatus(e) == LocationStatus.DetectedPresence
+            ).ToList();
+
+            if (unknownLocationEnemies.Any())
+            {
+                possibleActions.Add(new AIAction_IdentifyScentDirection(this, unknownLocationEnemies));
+            }
+        }
+        if (visibleTargets.Any())
+        {
+            GridNode bestHidingSpot = AISpatialAnalysis.FindBestHidingSpot(MyStats, MyMover, GetPerceivedHighestThreat());
+            if (bestHidingSpot != null)
+            {
+                float pathDist = GetParent<Node3D>().GlobalPosition.DistanceTo(bestHidingSpot.worldPosition);
+                float halfSpeed = MyMover.GetEffectiveMovementSpeed() / 2f;
+                float fullSpeed = MyMover.GetEffectiveMovementSpeed();
+                if (pathDist <= halfSpeed)
+                    possibleActions.Add(new AIAction_Hide(this, bestHidingSpot.worldPosition, 0));
+                if (pathDist > halfSpeed && pathDist <= fullSpeed)
+                    possibleActions.Add(new AIAction_Hide(this, bestHidingSpot.worldPosition, -5));
+            }
+            
+            CreatureStats primaryTarget = GetPerceivedHighestThreat() ?? visibleTargets.First();
+            Vector3 idealPosition = AISpatialAnalysis.FindBestPosition(MyStats, MyMover, primaryTarget);
+            
+            if (GetParent<Node3D>().GlobalPosition.DistanceTo(idealPosition) > 1f)
+            {
+                possibleActions.Add(new AIAction_MoveToPosition(this, idealPosition, primaryTarget));
+                if (AoOManager.Instance.IsThreatened(MyStats))
+                {
+                    possibleActions.Add(new AIAction_MoveToPosition(this, idealPosition, primaryTarget, useAcrobatics: true, fullSpeedAcrobatics: false));
+                    possibleActions.Add(new AIAction_MoveToPosition(this, idealPosition, primaryTarget, useAcrobatics: true, fullSpeedAcrobatics: true));
+                }
+            }
+        }
+        else
+        {
+            var heardContacts = AISpatialAnalysis.FindHeardContacts(MyStats);
+            if (heardContacts.Any())
+            {
+                AddSoundContactReactionActions(heardContacts, possibleActions);
+            }
+            else if (MyStats.Template.Speed_Fly > 0)
+            {
+                possibleActions.Add(new AIAction_Hover(this));
+            }
+        }
+        
+        if (MyStats.Template.Intelligence >= 6)
+        {
+            foreach (var target in visibleTargets)
+            {
+                var flankingOpportunities = AISpatialAnalysis.FindPotentialFlankingPositions(MyStats, MyMover, target);
+                foreach(var opportunity in flankingOpportunities)
 				{
-					// Found a target in darkness!
-				}
-			}
-		}
-	} // <-- THIS BRACKET WAS MISSING!
+                    possibleActions.Add(new AIAction_MoveToFlank(this, opportunity.Position, target, opportunity.Ally));
+                    if (AoOManager.Instance.IsThreatened(MyStats))
+                    {
+                        possibleActions.Add(new AIAction_MoveToFlank(this, opportunity.Position, target, opportunity.Ally, useAcrobatics: true, fullSpeedAcrobatics: false));
+                        possibleActions.Add(new AIAction_MoveToFlank(this, opportunity.Position, target, opportunity.Ally, useAcrobatics: true, fullSpeedAcrobatics: true));
+                    }
+                }
+            }
+        }
+    }
+    
+    if (MyActionManager.CanPerformAction(ActionType.Move))
+    {
+        GridNode currentNode = GridManager.Instance.NodeFromWorldPoint(GetParent<Node3D>().GlobalPosition);
+        foreach (var neighbor in GridManager.Instance.GetNeighbours(currentNode))
+        {
+            if (neighbor.gridY > currentNode.gridY && MyStats.Template.Speed_Climb > 0)
+            {
+                possibleActions.Add(new AIAction_Climb(this, neighbor.worldPosition));
+            }
+            
+            GridNode landNode = AISpatialAnalysis.FindLandingSpot(GetParent<Node3D>().GlobalPosition, neighbor);
+            if (landNode != null)
+            {
+                float dist = GetParent<Node3D>().GlobalPosition.DistanceTo(landNode.worldPosition);
+                if (dist <= MyMover.GetEffectiveMovementSpeed())
+                    possibleActions.Add(new AIAction_Jump(this, landNode.worldPosition, dist, isHighJump: false));
+            }
 
-	if (MyStats.MyEffects.HasCondition(Condition.Concentrating))
-	{
-		bool isEffective = false;
-		foreach(var enemy in visibleTargets)
-		{
-			if (enemy.MyEffects.ActiveEffects.Any(e => 
-				e.EffectData.ConditionApplied == Condition.Fascinated && 
-				e.SourceCreature == MyStats))
-			{
-				isEffective = true;
-				break;
-			}
-		}
+            if(neighbor.gridY > currentNode.gridY && neighbor.terrainType == TerrainType.Ground)
+            {
+                float height = (neighbor.gridY - currentNode.gridY) * GridManager.Instance.nodeDiameter;
+                if(height * 5f <= MyMover.GetEffectiveMovementSpeed())
+                {
+                    possibleActions.Add(new AIAction_Jump(this, neighbor.worldPosition, height, isHighJump: true));
+                }
+            }
+        }
+    }
+    
+    if (MyActionManager.CanPerformAction(ActionType.FullRound))
+    {
+        if (!MyStats.MyEffects.HasCondition(Condition.Blinded))
+        {
+            Vector3? safeDestination = AISpatialAnalysis.FindBestFleePosition(MyStats, MyMover);
+            if (safeDestination.HasValue)
+            {
+                possibleActions.Add(new AIAction_Withdraw(this, safeDestination.Value));
+            }
+        }
+    }
 
-		if (isEffective)
-		{
-			var concentrate = new AIAction_Concentrate(this);
-			concentrate.BoostScore(100f, " (Maintain Control)");
-			possibleActions.Add(concentrate);
-			return possibleActions; 
-		}
-	}
+    if (MyActionManager.CanPerformAction(ActionType.Move) && MyStats.MyEffects.HasCondition(Condition.Prone))
+    {
+        possibleActions.Add(new AIAction_StandUp(this));
+    }
 
-	var helplessTarget = visibleTargets.FirstOrDefault(t => t.MyEffects.HasCondition(Condition.Helpless));
-	if (helplessTarget != null && MyActionManager.CanPerformAction(ActionType.FullRound) && GetParent<Node3D>().GlobalPosition.DistanceTo(helplessTarget.GlobalPosition) <= MyStats.GetEffectiveReach((Item_SO)null).max)
-	{
-		var coupDeGraceAbility = GD.Load<Ability_SO>("res://Data/Abilities/SkillActions/Action_CoupDeGrace.tres");
-		if (coupDeGraceAbility != null)
-		{
-			possibleActions.Add(new AIAction_CoupDeGrace(this, helplessTarget, coupDeGraceAbility));
-		}
-	}
+    if (MyActionManager.CanPerformAction(ActionType.Move))
+    {
+        var nearbyItems = ItemManager.Instance?.GetItemsInRadius(GetParent<Node3D>().GlobalPosition, MyMover.GetEffectiveMovementSpeed() * 2f);
+        if (nearbyItems != null && nearbyItems.Any())
+        {
+            var primaryTarget = GetPerceivedHighestThreat() ?? visibleTargets.FirstOrDefault();
+            foreach (var worldItem in nearbyItems)
+            {
+                float itemUpgradeScore = GetItemUpgradeScore(worldItem.ItemData, primaryTarget);
+                if (itemUpgradeScore > 20)
+                    possibleActions.Add(new AIAction_PickupItem(this, worldItem, itemUpgradeScore));
+            }
+        }
+        var nearbyObjects = GetTree().GetNodesInGroup("WorldObject").Cast<WorldObject>()
+            .Where(o => GetParent<Node3D>().GlobalPosition.DistanceTo(o.GlobalPosition) <= MyMover.GetEffectiveMovementSpeed() * 2f)
+            .ToList();
+        
+        foreach (var worldObject in nearbyObjects)
+        {
+            float itemUpgradeScore = GetItemUpgradeScore(worldObject.BecomesItemOnPickup, MyStats);
+            if (itemUpgradeScore > 50) 
+            {
+                possibleActions.Add(new AIAction_PickupItem(this, worldObject, itemUpgradeScore));
+            }
+        }
+    }
 
-	if (MyStats.MyEffects.HasCondition(Condition.Panicked) || MyStats.MyEffects.HasCondition(Condition.Frightened))
-	{
-		possibleActions.Add(new AIAction_Flee(this));
-		return possibleActions;
-	}
-	
-	 if (MyStats.MyEffects.HasCondition(Condition.Pinned))
-	{
-		var escapePinAbility = MyStats.AvailableSkillActions.FirstOrDefault(a => a.AbilityName == "Escape Pin");
-		if (escapePinAbility != null && MyActionManager.CanPerformAction(escapePinAbility.ActionCost))
-		{
-			possibleActions.Add(new AIAction_CastGenericAbility(this, escapePinAbility, MyStats, GetParent<Node3D>().GlobalPosition));
-		}
-		possibleActions.Add(new AIAction_BreakGrapple(this));
-		return possibleActions; 
-	}
-	
-	if (MyStats.CurrentGrappleState != null)
-	{
-		if (MyStats.CurrentGrappleState.Controller == MyStats) 
-		{
-			possibleActions.Add(new AIAction_MaintainGrapple(this));
-		}
-		else if (MyStats.MyEffects.HasCondition(Condition.Grappled))
-		{
-			possibleActions.Add(new AIAction_BreakGrapple(this));
-			var escapeGrappleAbility = MyStats.AvailableSkillActions.FirstOrDefault(a => a.AbilityName == "Escape Grapple");
-			if (escapeGrappleAbility != null && MyActionManager.CanPerformAction(escapeGrappleAbility.ActionCost))
-			{
-				possibleActions.Add(new AIAction_CastGenericAbility(this, escapeGrappleAbility, MyStats, GetParent<Node3D>().GlobalPosition));
-			}
-		}
+    if (MyActionManager.CanPerformAction(ActionType.Move))
+    {
+        var currentWeapon = MyStats.MyInventory?.GetEquippedItemInstance(EquipmentSlot.MainHand);
+        var backpackWeapons = MyStats.MyInventory?.GetBackpackWeapons();
+        var primaryTarget = GetPerceivedHighestThreat() ?? visibleTargets.FirstOrDefault();
 
-		var allAbilities = MyStats.Template.KnownAbilities.Concat(MyStats.AvailableSkillActions).ToList();
-		foreach(var ability in allAbilities)
-		{
-			if (MyActionManager.CanPerformAction(ability))
-			{
-				if(ability.TargetType == TargetType.Self)
-				{
-					possibleActions.Add(new AIAction_CastGenericAbility(this, ability, MyStats, GetParent<Node3D>().GlobalPosition));
-				}
-			}
-		}
+        if (primaryTarget != null && backpackWeapons != null && backpackWeapons.Any())
+        {
+            foreach (var backpackWeapon in backpackWeapons)
+            {
+                string reason = IsWeaponSuperior(backpackWeapon, currentWeapon, primaryTarget);
+                if (!string.IsNullOrEmpty(reason))
+                    possibleActions.Add(new AIAction_SwitchWeapon(this, backpackWeapon, primaryTarget, reason));
+            }
+        }
+    }
 
-		var target = MyStats.CurrentGrappleState?.Target == MyStats ? MyStats.CurrentGrappleState?.Controller : MyStats.CurrentGrappleState?.Target;
-		if (target != null)
-		{
-			var weapon = MyStats.MyInventory?.GetEquippedItem(EquipmentSlot.MainHand);
-			if (weapon != null && weapon.Handedness != WeaponHandedness.TwoHanded)
-			{
-				var attackAbility = new Ability_SO();
-				attackAbility.AbilityName = weapon.ItemName;
-				possibleActions.Add(new AIAction_Attack(this, target, attackAbility, null));
-			}
-			if (MyStats.Template.MeleeAttacks.Any())
-			{
-				foreach (var naturalAttack in MyStats.Template.MeleeAttacks)
-				{
-					possibleActions.Add(new AIAction_SingleNaturalAttack(this, target, naturalAttack));
-				}
-			}
-		}
-		return possibleActions; 
-	}
+    if (MyStats.Template.Intelligence >= 12 && MyActionManager.CanPerformAction(ActionType.Standard))
+    {
+        possibleActions.Add(new AIAction_Delay(this));
+    }
+    
+    if (MyActionManager.CanPerformAction(ActionType.Standard))
+    {
+        var gaseous = GetParent().GetNodeOrNull<GaseousFormController>("GaseousFormController");
+        if (gaseous != null && gaseous.IsWindWalk && !gaseous.InFastWindMode)
+        {
+            possibleActions.Add(new AIAction_ToggleWindWalk(this));
+        }
+    }
+    
+    if (MyActionManager.CanPerformAction(ActionType.Standard))
+    {
+        if (MyStats.HasFeat("Flyby Attack") && 
+            MyStats.Template.Speed_Fly > 0 && 
+            MyActionManager.CanPerformAction(ActionType.Move) && 
+            MyActionManager.CanPerformAction(ActionType.Standard))
+        {
+            List<AIAction> potentialStandardActions = new List<AIAction>();
+            var weapon = MyStats.MyInventory?.GetEquippedItem(EquipmentSlot.MainHand);
+            if (weapon != null)
+            {
+                var weaponAttackAbility = new Ability_SO { AbilityName = weapon.ItemName, ActionCost = ActionType.Standard };
+                foreach(var t in visibleTargets) potentialStandardActions.Add(new AIAction_Attack(this, t, weaponAttackAbility, null));
+            }
+            
+            foreach (var standardAction in potentialStandardActions)
+            {
+                CreatureStats target = standardAction.GetTarget();
+                if (target == null) continue;
 
-	var detectMagicController = GetParent().GetNodeOrNull<DetectMagicController>("DetectMagicController");
-	if (detectMagicController != null && MyActionManager.CanPerformAction(ActionType.Standard))
-	{
-		possibleActions.Add(new AIAction_Concentrate(this));
-	}
+                Vector3 direction = (target.GlobalPosition - GetParent<Node3D>().GlobalPosition).Normalized();
+                if (direction == Vector3.Zero) direction = -GetParent<Node3D>().GlobalTransform.Basis.Z;
+                Vector3 endPoint = target.GlobalPosition + direction * 30f;
+                
+                List<Vector3> flybyPath = Pathfinding.Instance.FindPath(MyStats, GetParent<Node3D>().GlobalPosition, endPoint);
 
-	var waterBreathingSpell = MyStats.Template.KnownAbilities.FirstOrDefault(a => a.AbilityName == "Water Breathing");
-	if (waterBreathingSpell != null && MyActionManager.CanPerformAction(waterBreathingSpell.ActionCost))
-	{
-		var primaryTarget = GetPerceivedHighestThreat();
-		if (primaryTarget != null)
-		{
-			var path = Pathfinding.Instance.FindPath(MyStats, GetParent<Node3D>().GlobalPosition, primaryTarget.GlobalPosition);
-			if (path != null && path.Any(p => GridManager.Instance.NodeFromWorldPoint(p).terrainType == TerrainType.Water))
-			{
-				if (!MyStats.MyEffects.HasEffect("Water Breathing"))
-				{
-					possibleActions.Add(new AIAction_CastGenericAbility(this, waterBreathingSpell, MyStats, GetParent<Node3D>().GlobalPosition));
-				}
-			}
-		}
-	}
+                if (flybyPath != null && (flybyPath.Count * 5f) <= MyMover.GetEffectiveMovementSpeed())
+                {
+                    bool canPerformActionOnPath = false;
+                    if (standardAction is AIAction_Attack || standardAction is AIAction_SingleNaturalAttack)
+                    {
+                        canPerformActionOnPath = flybyPath.Any(p => p.DistanceTo(target.GlobalPosition) <= MyStats.GetEffectiveReach((Item_SO)null).max);
+                    }
+                    
+                    if (canPerformActionOnPath)
+                    {
+                        possibleActions.Add(new AIAction_FlybyAttack(this, standardAction, endPoint, flybyPath));
+                    }
+                }
+            }
+        }
+        
+        var nearbyObjects = GetTree().GetNodesInGroup("ObjectDurability").Cast<ObjectDurability>()
+            .Where(o => GetParent<Node3D>().GlobalPosition.DistanceTo(o.GlobalPosition) <= MyStats.GetEffectiveReach((Item_SO)null).max)
+            .ToList();
 
-	var allPossibleAbilities2 = MyStats.Template.KnownAbilities.Concat(MyStats.AvailableSkillActions).ToList();
-	if (allPossibleAbilities2 != null)
-	{
-		foreach (var ability in allPossibleAbilities2)
-		{
-			if (!MyActionManager.CanPerformAction(ability) || !MyStats.MyUsage.HasUsesRemaining(ability)) continue;
+        var primaryTarget = GetPerceivedHighestThreat();
 
-			var weatherEffect = ability.EffectComponents.OfType<Effect_ControlWeather>().FirstOrDefault();
-			if (weatherEffect != null && weatherEffect.AllowedWeathers.Count > 0)
-			{
-				foreach (var weatherOption in weatherEffect.AllowedWeathers)
-				{
-					var action = new AIAction_CastGenericAbility(this, ability, MyStats, GetParent<Node3D>().GlobalPosition, CommandWord.None, false, weatherOption);
-					action.Name = $"Cast {ability.AbilityName} ({weatherOption.WeatherName})";
-					possibleActions.Add(action);
+        foreach (var obj in nearbyObjects)
+        {
+            if (primaryTarget != null)
+            {
+                var visibility = LineOfSightManager.GetVisibility(MyStats, primaryTarget);
+                if (!visibility.HasLineOfSight && visibility.Reason.Contains("Cover"))
+                {
+                    possibleActions.Add(new AIAction_AttackObject(this, obj, "Clear LoS"));
+                }
+            }
+            
+            if (MyStats.MyInventory?.GetEquippedItem(EquipmentSlot.MainHand) == null && obj.DebrisLootTable != null)
+            {
+                possibleActions.Add(new AIAction_AttackObject(this, obj, "Create Weapon"));
+            }
+            
+            if (obj.IsFlammable && MyStats.MyInventory?.GetEquippedItem(EquipmentSlot.MainHand)?.DamageInfo.Any(d => d.DamageType == "Fire") == true)
+            {
+                possibleActions.Add(new AIAction_AttackObject(this, obj, "Burn Hazard"));
+            }
+        }
+    }
 
-					if (ability.IsMythicCapable && MyStats.HasMythicPower())
-					{
-						var mythicAction = new AIAction_CastGenericAbility(this, ability, MyStats, GetParent<Node3D>().GlobalPosition, CommandWord.None, true, weatherOption);
-						mythicAction.Name = $"Cast {ability.AbilityName} (Mythic {weatherOption.WeatherName})";
-						possibleActions.Add(mythicAction);
-					}
-				}
-				continue; 
-			}
-
-			var beastShapeEffect = ability.EffectComponents.OfType<Effect_BeastShape>().FirstOrDefault();
-			if (beastShapeEffect != null && beastShapeEffect.AllowedForms.Count > 0)
-			{
-				foreach (var formOption in beastShapeEffect.AllowedForms)
-				{
-					var action = new AIAction_CastGenericAbility(this, ability, MyStats, GetParent<Node3D>().GlobalPosition, CommandWord.None, false, formOption);
-					action.Name = $"Cast {ability.AbilityName} ({formOption.CreatureName})";
-					possibleActions.Add(action);
-
-					if (ability.IsMythicCapable && MyStats.HasMythicPower())
-					{
-						var mythicAction = new AIAction_CastGenericAbility(this, ability, MyStats, GetParent<Node3D>().GlobalPosition, CommandWord.None, true, formOption);
-						mythicAction.Name = $"Cast {ability.AbilityName} (Mythic {formOption.CreatureName})";
-						possibleActions.Add(mythicAction);
-					}
-				}
-				continue;
-			}
-
-			 if (ability.AvailableCommands != null && ability.AvailableCommands.Any())
-			{
-				foreach (var command in ability.AvailableCommands)
-				{
-					if (ability.TargetType == TargetType.SingleEnemy)
-					{
-						foreach (var target in visibleTargets)
-						{
-							if (GetParent<Node3D>().GlobalPosition.DistanceTo(target.GlobalPosition) <= ability.Range.GetRange(MyStats))
-							{
-								possibleActions.Add(new AIAction_CastGenericAbility(this, ability, target, target.GlobalPosition, command));
-							}
-						}
-					}
-				}
-				continue; 
-			}
-			
-			 var myProjectedImage = TurnManager.Instance.GetAllCombatants().FirstOrDefault(c => c.IsProjectedImage && c.Caster == MyStats);
-			if (myProjectedImage != null && ability.Range.GetRange(MyStats) > 0) 
-			{
-				Vector3 imagePosition = myProjectedImage.GlobalPosition;
-				if (ability.TargetType == TargetType.SingleEnemy)
-				{
-					foreach (var target in visibleTargets)
-					{
-						if (imagePosition.DistanceTo(target.GlobalPosition) <= ability.Range.GetRange(MyStats))
-						{
-							var castAction = new AIAction_CastGenericAbility(this, ability, target, target.GlobalPosition);
-							castAction.Name = $"[From Image] {castAction.Name}";
-							possibleActions.Add(castAction);
-						}
-					}
-				}
-			}
-
-			switch (ability.TargetType)
-			{
-			   case TargetType.Self:
-				 if (ability.AbilityName == "Dimension Door")
-					{
-						var doorDestinations = GetDimensionDoorDestinations(ability, visibleTargets);
-						foreach (var destination in doorDestinations)
-						{
-							possibleActions.Add(new AIAction_CastGenericAbility(this, ability, MyStats, destination));
-						}
-						break;
-					}
-
-					possibleActions.Add(new AIAction_CastGenericAbility(this, ability, MyStats, GetParent<Node3D>().GlobalPosition));
-					if (ability.IsMythicCapable && MyStats.HasMythicPower())
-					{
-						possibleActions.Add(new AIAction_CastGenericAbility(this, ability, MyStats, GetParent<Node3D>().GlobalPosition, CommandWord.None, true));
-					}
-					break;
-				case TargetType.SingleAlly:
-					var allAllies = FindAllies();
-					allAllies.Add(MyStats);
-					foreach (var ally in allAllies)
-					{
-						if (GetParent<Node3D>().GlobalPosition.DistanceTo(ally.GlobalPosition) <= ability.Range.GetRange(MyStats))
-						{
-							possibleActions.Add(new AIAction_CastGenericAbility(this, ability, ally, ally.GlobalPosition));
-							if (ability.IsMythicCapable && MyStats.HasMythicPower())
-							{
-								possibleActions.Add(new AIAction_CastGenericAbility(this, ability, ally, ally.GlobalPosition, CommandWord.None, true));
-							}
-						}
-					}
-					break;
-				case TargetType.SingleEnemy:
-					var candidateTargets = visibleTargets;
-					if (ability.AbilityName == "Discern Location")
-					{
-						candidateTargets = GetDiscernLocationCandidates();
-					}
-
-					foreach (var target in candidateTargets)
-					{
-						if (GetParent<Node3D>().GlobalPosition.DistanceTo(target.GlobalPosition) <= ability.Range.GetRange(MyStats))
-						{
-							possibleActions.Add(new AIAction_CastGenericAbility(this, ability, target, target.GlobalPosition));
-							if (ability.IsMythicCapable && MyStats.HasMythicPower())
-							{
-								possibleActions.Add(new AIAction_CastGenericAbility(this, ability, target, target.GlobalPosition, CommandWord.None, true));
-							}
-						}
-					}
-					 if (ability.EntityType == TargetableEntityType.ObjectsOnly || ability.EntityType == TargetableEntityType.CreaturesAndObjects)
-					{
-						var nearbyObjects = GetTree().GetNodesInGroup("ObjectDurability").Cast<ObjectDurability>()
-							.Where(o => GetParent<Node3D>().GlobalPosition.DistanceTo(o.GlobalPosition) <= ability.Range.GetRange(MyStats))
-							.ToList();
-						foreach (var obj in nearbyObjects)
-						{
-							possibleActions.Add(new AIAction_CastGenericAbility(this, ability, null, obj.GlobalPosition, CommandWord.None, false, null, obj));
-						}
-					}
-					break;
-			   case TargetType.Area_AlliesOnly:
-				case TargetType.Area_EnemiesOnly:
-				case TargetType.Area_FriendOrFoe:
-					if (ability.AreaOfEffect.Shape == AoEShape.Burst || 
-						ability.AreaOfEffect.Shape == AoEShape.Emanation || 
-						ability.AreaOfEffect.Shape == AoEShape.Cylinder)
-					{
-						 possibleActions.Add(new AIAction_CastGenericAbility(this, ability, null, GetParent<Node3D>().GlobalPosition));
-						 if (ability.IsMythicCapable && MyStats.HasMythicPower())
-						 {
-							possibleActions.Add(new AIAction_CastGenericAbility(this, ability, null, GetParent<Node3D>().GlobalPosition, CommandWord.None, true));
-						 }
-					}
-					else 
-					{
-						var outcome = AISpatialAnalysis.FindBestPlacementForAreaEffect(MyStats, ability);
-						if (outcome.EnemiesHit.Any() || outcome.AlliesHit.Any())
-						{
-							possibleActions.Add(new AIAction_CastGenericAbility(this, ability, null, outcome.AimPoint));
-							if (ability.IsMythicCapable && MyStats.HasMythicPower())
-							{
-								possibleActions.Add(new AIAction_CastGenericAbility(this, ability, null, outcome.AimPoint, CommandWord.None, true));
-							}
-						}
-					}
-					break;
-			}
-		}
-	}
-	
-	if (MyActionManager.CanPerformAction(ActionType.FiveFootStep))
-	{
-		GridNode currentNode = GridManager.Instance.NodeFromWorldPoint(GetParent<Node3D>().GlobalPosition);
-		List<GridNode> adjacentNodes = GridManager.Instance.GetNeighbours(currentNode);
-		foreach(var neighbor in adjacentNodes)
-		{
-			if (neighbor.movementCost > neighbor.baseMovementCost || (neighbor.terrainType != TerrainType.Ground && neighbor.terrainType != TerrainType.Water))
-			{
-				continue;
-			}
-			possibleActions.Add(new AIAction_FiveFootStep(this, neighbor.worldPosition));
-		}
-	}
-	
-	bool hasMeleeCapability = (MyStats.MyInventory?.GetEquippedItem(EquipmentSlot.MainHand) != null) || (MyStats.Template.MeleeAttacks.Any());
-	
-	if (MyActionManager.CanPerformAction(ActionType.FullRound) && hasMeleeCapability)
-	{
-		bool canFlurry = MyStats.Template.Classes.Any(c => c.ToLower().Contains("monk"));
-		var weapon = MyStats.MyInventory?.GetEquippedItem(EquipmentSlot.MainHand);
-
-		foreach (var target in visibleTargets)
-		{
-			 if (GetParent<Node3D>().GlobalPosition.DistanceTo(target.GlobalPosition) <= MyStats.GetEffectiveReach((Item_SO)null).max)
-			{
-				if (canFlurry && (weapon == null || weapon.IsMonkWeapon))
-				{
-					possibleActions.Add(new AIAction_FlurryOfBlows(this, target));
-				}
-
-				possibleActions.Add(new AIAction_FullAttack(this, target, null));
-				var powerAttackFeat = MyStats.Template.Feats.FirstOrDefault(f => f.Feat.FeatName == "Power Attack");
-				if (powerAttackFeat != null)
-				{
-					possibleActions.Add(new AIAction_FullAttack(this, target, powerAttackFeat.Feat));
-				}
-			}
-		}
-	}
-	
-	if (MyActionManager.CanPerformAction(ActionType.Standard))
-	{
-		var weapon = MyStats.MyInventory?.GetEquippedItem(EquipmentSlot.MainHand);
-		if (weapon != null)
-		{
-			var weaponAttackAbility = new Ability_SO();
-			weaponAttackAbility.AbilityName = weapon.ItemName;
-			weaponAttackAbility.ActionCost = ActionType.Standard;
-			foreach (var target in visibleTargets)
-			{
-				if (GetParent<Node3D>().GlobalPosition.DistanceTo(target.GlobalPosition) <= MyStats.GetEffectiveReach((Item_SO)null).max)
-				{
-					possibleActions.Add(new AIAction_Attack(this, target, weaponAttackAbility, null));
-					var powerAttackFeat = MyStats.Template.Feats.FirstOrDefault(f => f.Feat.FeatName == "Power Attack");
-					if (powerAttackFeat != null)
-					{
-						possibleActions.Add(new AIAction_Attack(this, target, weaponAttackAbility, powerAttackFeat.Feat));
-					}
-				}
-			}
-			 if (MyStats.HasFeat("Vital Strike"))
-			{
-				foreach (var target in visibleTargets)
-				{
-					if (GetParent<Node3D>().GlobalPosition.DistanceTo(target.GlobalPosition) <= MyStats.GetEffectiveReach((Item_SO)null).max)
-					{
-						possibleActions.Add(new AIAction_VitalStrike(this, target));
-					}
-				}
-			}
-		}
-		else if (MyStats.Template.MeleeAttacks.Any())
-		{
-			foreach (var naturalAttack in MyStats.Template.MeleeAttacks.Where(na => na.IsPrimary))
-			{
-				 foreach (var target in visibleTargets)
-				 {
-					if (GetParent<Node3D>().GlobalPosition.DistanceTo(target.GlobalPosition) <= MyStats.GetEffectiveReach((NaturalAttack)null).max)
-					{
-						possibleActions.Add(new AIAction_SingleNaturalAttack(this, target, naturalAttack));
-					}
-				 }
-			}
-		}
-		var rangedWeapon = MyStats.MyInventory?.GetEquippedItem(EquipmentSlot.MainHand);
-		if (rangedWeapon != null && rangedWeapon.WeaponType != WeaponType.Melee)
-		{
-			foreach (var target in visibleTargets)
-			{
-				if (GetParent<Node3D>().GlobalPosition.DistanceTo(target.GlobalPosition) <= rangedWeapon.RangeIncrement * 10)
-				{
-					possibleActions.Add(new AIAction_RangedAttack(this, target, rangedWeapon, null));
-					var deadlyAimFeat = MyStats.Template.Feats.FirstOrDefault(f => f.Feat.FeatName == "Deadly Aim");
-					if (deadlyAimFeat != null)
-					{
-						possibleActions.Add(new AIAction_RangedAttack(this, target, rangedWeapon, deadlyAimFeat.Feat));
-					}
-				}
-			}
-		}
-		  else if (rangedWeapon != null && rangedWeapon.WeaponType == WeaponType.Melee && rangedWeapon.RangeIncrement <= 0)
-		{
-			var throwImprovisedAbility = GD.Load<Ability_SO>("res://Data/Abilities/SkillActions/Action_ThrowImprovised.tres");
-			if (throwImprovisedAbility != null)
-			{
-				foreach (var target in visibleTargets)
-				{
-					possibleActions.Add(new AIAction_ThrowImprovised(this, target, rangedWeapon, throwImprovisedAbility));
-				}
-			}
-		}
-		
-		var awesomeBlowFeat = MyStats.Template.Feats.FirstOrDefault(f => f.Feat.FeatName == "Awesome Blow");
-		 if (awesomeBlowFeat != null && awesomeBlowFeat.Feat.AssociatedAbility != null)
-		{
-			foreach (var target in visibleTargets)
-			{
-				if (GetParent<Node3D>().GlobalPosition.DistanceTo(target.GlobalPosition) <= MyStats.GetEffectiveReach((Item_SO)null).max && target.Template.Size < MyStats.Template.Size)
-				{
-					possibleActions.Add(new AIAction_AwesomeBlow(this, target, awesomeBlowFeat.Feat.AssociatedAbility));
-				}
-			}
-		}
-		
-		var allCombatants = TurnManager.Instance?.GetAllCombatants() ?? new System.Collections.Generic.List<CreatureStats>();
-		foreach (var potentialVictim in allCombatants)
-		{
-			if (GetParent<Node3D>().GlobalPosition.DistanceTo(potentialVictim.GlobalPosition) <= MyStats.GetEffectiveReach((Item_SO)null).max)
-			{
-				bool isHelpless = potentialVictim.MyEffects.HasCondition(Condition.Helpless) || potentialVictim.MyEffects.HasCondition(Condition.Unconscious);
-				bool isAlly = potentialVictim.IsInGroup("Player") == MyStats.IsInGroup("Player");
-				if (isHelpless || isAlly) possibleActions.Add(new AIAction_BindSoulEngine(this, potentialVictim));
-			}
-		}
-
-		foreach (var target in visibleTargets)
-		{
-			if (GetParent<Node3D>().GlobalPosition.DistanceTo(target.GlobalPosition) <= MyStats.GetEffectiveReach((Item_SO)null).max)
-			{
-				var soulEngine = target.GetNodeOrNull<SoulEngineController>("SoulEngineController");
-				if (soulEngine != null && soulEngine.IsBodyAttached)
-				{
-					possibleActions.Add(new AIAction_PrySoulEngine(this, target));
-				}
-			}
-		}
-	}
-	
-	 if (MyActionManager.CanPerformAction(ActionType.Standard))
-	{
-		possibleActions.Add(new AIAction_TotalDefense(this));
-	}
-
-	var attackActionsToWrap = possibleActions.Where(a => a is AIAction_Attack || a is AIAction_FullAttack || a is AIAction_SingleNaturalAttack).ToList();
-	foreach (var attack in attackActionsToWrap)
-	{
-		possibleActions.Add(new AIAction_FightDefensively(this, attack));
-	}
-
-	if (MyActionManager.CanPerformAction(ActionType.Standard))
-	{
-		var bestStandardAttack = possibleActions
-			.Where(a => a is AIAction_Attack || a is AIAction_SingleNaturalAttack)
-			.OrderByDescending(a => a.Score)
-			.FirstOrDefault();
-
-		if (bestStandardAttack != null && bestStandardAttack.GetTarget() != null)
-		{
-			possibleActions.Add(new AIAction_Feint(this, bestStandardAttack.GetTarget(), bestStandardAttack));
-		}
-	}
-
-	if (MyActionManager.CanPerformAction(ActionType.FullRound))
-	{
-		var feignAbility = MyStats.Template.KnownAbilities.FirstOrDefault(a => a.AbilityName == "Feign Harmlessness");
-		if (feignAbility != null)
-		{
-			var highestThreat = GetPerceivedHighestThreat();
-			if (highestThreat != null)
-			{
-				possibleActions.Add(new AIAction_CastGenericAbility(this, feignAbility, highestThreat, highestThreat.GlobalPosition));
-			}
-		}
-	}
-
-	if (MyStats.IsMounted)
-	{
-		if (MyStats.AvailableSkillActions.Any(a => a.AbilityName == "Spur Mount") && MyActionManager.CanPerformAction(ActionType.Move))
-			possibleActions.Add(new AIAction_SpurMount(this));
-		if (MyStats.AvailableSkillActions.Any(a => a.AbilityName == "Use Mount as Cover") && MyActionManager.CanPerformAction(ActionType.Immediate))
-			possibleActions.Add(new AIAction_UseMountAsCover(this));
-		if (MyStats.AvailableSkillActions.Any(a => a.AbilityName == "Recover from Cover") && MyActionManager.CanPerformAction(ActionType.Move))
-			possibleActions.Add(new AIAction_RecoverFromCover(this));
-		if (MyStats.AvailableSkillActions.Any(a => a.AbilityName == "Dismount") && MyActionManager.CanPerformAction(ActionType.Move))
-			possibleActions.Add(new AIAction_Dismount(this));
-	}
-	else
-	{
-		if (MyStats.AvailableSkillActions.Any(a => a.AbilityName == "Mount") && MyActionManager.CanPerformAction(ActionType.Move))
-		{
-			var potentialMounts = FindAllies().Where(ally => MyStats.Mount(ally, isCheckOnly: true)).ToList();
-			foreach (var mount in potentialMounts)
-			{
-				if (GetParent<Node3D>().GlobalPosition.DistanceTo(mount.GlobalPosition) <= MyMover.GetEffectiveMovementSpeed() + 5f)
-				{
-					possibleActions.Add(new AIAction_Mount(this, mount));
-				}
-			}
-		}
-	}
-	
-	if (MyActionManager.CanPerformAction(ActionType.Standard))
-	{
-		if (MyStats.MyInventory.GetEquippedItem(EquipmentSlot.MainHand) == null)
-		{
-			var adherers = visibleTargets.Where(t => t.GetNodeOrNull<PassiveAdhesiveController>("PassiveAdhesiveController") != null).ToList();
-			foreach (var adherer in adherers)
-			{
-				var stuckItems = ItemManager.Instance.GetItemsInRadius(adherer.GlobalPosition, 1.0f);
-				foreach (var item in stuckItems)
-				{
-					if (item.ItemData.ItemType == ItemType.Weapon)
-					{
-						if (GetParent<Node3D>().GlobalPosition.DistanceTo(adherer.GlobalPosition) <= MyStats.GetEffectiveReach((Item_SO)null).max)
-						{
-							possibleActions.Add(new AIAction_RetrieveStuckWeapon(this, item, adherer));
-						}
-					}
-				}
-			}
-		}
-	}
-	
-	if (MyActionManager.CanPerformAction(ActionType.Move))
-	{
-		possibleActions.Add(new AIAction_Search(this));
-		
-		var autonomousEntities = GetTree().GetNodesInGroup("AutonomousEntities");
-		foreach (GridNode node in autonomousEntities)
-		{
-			if (node is AutonomousEntityController entity && entity.Caster == MyStats)
-			{
-				var highestThreat = GetPerceivedHighestThreat();
-				if (highestThreat != null)
-				{
-					possibleActions.Add(new AIAction_RedirectAutonomousEntity(this, entity, highestThreat));
-				}
-			}
-		}
-		if (MyStats.Template.HasScent && !CombatMemory.HasCheckedScentDirection(MyStats))
-		{
-			var smelled = CombatMemory.GetSmelledEnemies(MyStats);
-			var unknownLocationEnemies = smelled.Where(e => 
-				GetParent().GetNode<CombatStateController>("CombatStateController").GetLocationStatus(e) == LocationStatus.DetectedPresence
-			).ToList();
-
-			if (unknownLocationEnemies.Any())
-			{
-				possibleActions.Add(new AIAction_IdentifyScentDirection(this, unknownLocationEnemies));
-			}
-		}
-		if (visibleTargets.Any())
-		{
-			GridNode bestHidingSpot = AISpatialAnalysis.FindBestHidingSpot(MyStats, MyMover, GetPerceivedHighestThreat());
-			if (bestHidingSpot != null)
-			{
-				float pathDist = GetParent<Node3D>().GlobalPosition.DistanceTo(bestHidingSpot.worldPosition);
-				float halfSpeed = MyMover.GetEffectiveMovementSpeed() / 2f;
-				float fullSpeed = MyMover.GetEffectiveMovementSpeed();
-				if (pathDist <= halfSpeed)
-					possibleActions.Add(new AIAction_Hide(this, bestHidingSpot.worldPosition, 0));
-				if (pathDist > halfSpeed && pathDist <= fullSpeed)
-					possibleActions.Add(new AIAction_Hide(this, bestHidingSpot.worldPosition, -5));
-			}
-			
-			CreatureStats primaryTarget = GetPerceivedHighestThreat() ?? visibleTargets.First();
-			Vector3 idealPosition = AISpatialAnalysis.FindBestPosition(MyStats, MyMover, primaryTarget);
-			
-			if (GetParent<Node3D>().GlobalPosition.DistanceTo(idealPosition) > 1f)
-			{
-				possibleActions.Add(new AIAction_MoveToPosition(this, idealPosition, primaryTarget));
-				if (AoOManager.Instance.IsThreatened(MyStats))
-				{
-					possibleActions.Add(new AIAction_MoveToPosition(this, idealPosition, primaryTarget, useAcrobatics: true, fullSpeedAcrobatics: false));
-					possibleActions.Add(new AIAction_MoveToPosition(this, idealPosition, primaryTarget, useAcrobatics: true, fullSpeedAcrobatics: true));
-				}
-			}
-		}
-		else
-		{
-			var heardContacts = AISpatialAnalysis.FindHeardContacts(MyStats);
-			if (heardContacts.Any())
-			{
-				AddSoundContactReactionActions(heardContacts, possibleActions);
-			}
-			else if (MyStats.Template.Speed_Fly > 0)
-			{
-				possibleActions.Add(new AIAction_Hover(this));
-			}
-		}
-		
-		if (MyStats.Template.Intelligence >= 6)
-		{
-			foreach (var target in visibleTargets)
-			{
-				var flankingOpportunities = AISpatialAnalysis.FindPotentialFlankingPositions(MyStats, MyMover, target);
-				foreach(var opportunity in flankingOpportunities)
-				{
-					possibleActions.Add(new AIAction_MoveToFlank(this, opportunity.Position, target, opportunity.Ally));
-					if (AoOManager.Instance.IsThreatened(MyStats))
-					{
-						possibleActions.Add(new AIAction_MoveToFlank(this, opportunity.Position, target, opportunity.Ally, useAcrobatics: true, fullSpeedAcrobatics: false));
-						possibleActions.Add(new AIAction_MoveToFlank(this, opportunity.Position, target, opportunity.Ally, useAcrobatics: true, fullSpeedAcrobatics: true));
-					}
-				}
-			}
-		}
-	}
-	
-	if (MyActionManager.CanPerformAction(ActionType.Move))
-	{
-		GridNode currentNode = GridManager.Instance.NodeFromWorldPoint(GetParent<Node3D>().GlobalPosition);
-		foreach (var neighbor in GridManager.Instance.GetNeighbours(currentNode))
-		{
-			if (neighbor.gridY > currentNode.gridY && MyStats.Template.Speed_Climb > 0)
-			{
-				possibleActions.Add(new AIAction_Climb(this, neighbor.worldPosition));
-			}
-			
-			GridNode landNode = AISpatialAnalysis.FindLandingSpot(GetParent<Node3D>().GlobalPosition, neighbor);
-			if (landNode != null)
-			{
-				float dist = GetParent<Node3D>().GlobalPosition.DistanceTo(landNode.worldPosition);
-				if (dist <= MyMover.GetEffectiveMovementSpeed())
-					possibleActions.Add(new AIAction_Jump(this, landNode.worldPosition, dist, isHighJump: false));
-			}
-
-			if(neighbor.gridY > currentNode.gridY && neighbor.terrainType == TerrainType.Ground)
-			{
-				float height = (neighbor.gridY - currentNode.gridY) * GridManager.Instance.nodeDiameter;
-				if(height * 5f <= MyMover.GetEffectiveMovementSpeed())
-				{
-					possibleActions.Add(new AIAction_Jump(this, neighbor.worldPosition, height, isHighJump: true));
-				}
-			}
-		}
-	}
-	
-	if (MyActionManager.CanPerformAction(ActionType.FullRound))
-	{
-		if (!MyStats.MyEffects.HasCondition(Condition.Blinded))
-		{
-			Vector3? safeDestination = AISpatialAnalysis.FindBestFleePosition(MyStats, MyMover);
-			if (safeDestination.HasValue)
-			{
-				possibleActions.Add(new AIAction_Withdraw(this, safeDestination.Value));
-			}
-		}
-	}
-
-	if (MyActionManager.CanPerformAction(ActionType.Move) && MyStats.MyEffects.HasCondition(Condition.Prone))
-	{
-		possibleActions.Add(new AIAction_StandUp(this));
-	}
-
-	if (MyActionManager.CanPerformAction(ActionType.Move))
-	{
-		var nearbyItems = ItemManager.Instance?.GetItemsInRadius(GetParent<Node3D>().GlobalPosition, MyMover.GetEffectiveMovementSpeed() * 2f);
-		if (nearbyItems != null && nearbyItems.Any())
-		{
-			var primaryTarget = GetPerceivedHighestThreat() ?? visibleTargets.FirstOrDefault();
-			foreach (var worldItem in nearbyItems)
-			{
-				float itemUpgradeScore = GetItemUpgradeScore(worldItem.ItemData, primaryTarget);
-				if (itemUpgradeScore > 20)
-					possibleActions.Add(new AIAction_PickupItem(this, worldItem, itemUpgradeScore));
-			}
-		}
-		var nearbyObjects = GetTree().GetNodesInGroup("WorldObject").Cast<WorldObject>()
-			.Where(o => GetParent<Node3D>().GlobalPosition.DistanceTo(o.GlobalPosition) <= MyMover.GetEffectiveMovementSpeed() * 2f)
-			.ToList();
-		
-		foreach (var worldObject in nearbyObjects)
-		{
-			float itemUpgradeScore = GetItemUpgradeScore(worldObject.BecomesItemOnPickup, MyStats);
-			if (itemUpgradeScore > 50) 
-			{
-				possibleActions.Add(new AIAction_PickupItem(this, worldObject, itemUpgradeScore));
-			}
-		}
-	}
-
-	if (MyActionManager.CanPerformAction(ActionType.Move))
-	{
-		var currentWeapon = MyStats.MyInventory?.GetEquippedItemInstance(EquipmentSlot.MainHand);
-		var backpackWeapons = MyStats.MyInventory?.GetBackpackWeapons();
-		var primaryTarget = GetPerceivedHighestThreat() ?? visibleTargets.FirstOrDefault();
-
-		if (primaryTarget != null && backpackWeapons != null && backpackWeapons.Any())
-		{
-			foreach (var backpackWeapon in backpackWeapons)
-			{
-				string reason = IsWeaponSuperior(backpackWeapon, currentWeapon, primaryTarget);
-				if (!string.IsNullOrEmpty(reason))
-					possibleActions.Add(new AIAction_SwitchWeapon(this, backpackWeapon, primaryTarget, reason));
-			}
-		}
-	}
-
-	if (MyStats.Template.Intelligence >= 12 && MyActionManager.CanPerformAction(ActionType.Standard))
-	{
-		possibleActions.Add(new AIAction_Delay(this));
-	}
-	
-	if (MyActionManager.CanPerformAction(ActionType.Standard))
-	{
-		var gaseous = GetParent().GetNodeOrNull<GaseousFormController>("GaseousFormController");
-		if (gaseous != null && gaseous.IsWindWalk && !gaseous.InFastWindMode)
-		{
-			possibleActions.Add(new AIAction_ToggleWindWalk(this));
-		}
-	}
-	
-	if (MyActionManager.CanPerformAction(ActionType.Standard))
-	{
-		if (MyStats.HasFeat("Flyby Attack") && 
-			MyStats.Template.Speed_Fly > 0 && 
-			MyActionManager.CanPerformAction(ActionType.Move) && 
-			MyActionManager.CanPerformAction(ActionType.Standard))
-		{
-			List<AIAction> potentialStandardActions = new List<AIAction>();
-			var weapon = MyStats.MyInventory?.GetEquippedItem(EquipmentSlot.MainHand);
-			if (weapon != null)
-			{
-				var weaponAttackAbility = new Ability_SO { AbilityName = weapon.ItemName, ActionCost = ActionType.Standard };
-				foreach(var t in visibleTargets) potentialStandardActions.Add(new AIAction_Attack(this, t, weaponAttackAbility, null));
-			}
-			
-			foreach (var standardAction in potentialStandardActions)
-			{
-				CreatureStats target = standardAction.GetTarget();
-				if (target == null) continue;
-
-				Vector3 direction = (target.GlobalPosition - GetParent<Node3D>().GlobalPosition).Normalized();
-				if (direction == Vector3.Zero) direction = -GetParent<Node3D>().GlobalTransform.Basis.Z;
-				Vector3 endPoint = target.GlobalPosition + direction * 30f;
-				
-				List<Vector3> flybyPath = Pathfinding.Instance.FindPath(MyStats, GetParent<Node3D>().GlobalPosition, endPoint);
-
-				if (flybyPath != null && (flybyPath.Count * 5f) <= MyMover.GetEffectiveMovementSpeed())
-				{
-					bool canPerformActionOnPath = false;
-					if (standardAction is AIAction_Attack || standardAction is AIAction_SingleNaturalAttack)
-					{
-						canPerformActionOnPath = flybyPath.Any(p => p.DistanceTo(target.GlobalPosition) <= MyStats.GetEffectiveReach((Item_SO)null).max);
-					}
-					
-					if (canPerformActionOnPath)
-					{
-						possibleActions.Add(new AIAction_FlybyAttack(this, standardAction, endPoint, flybyPath));
-					}
-				}
-			}
-		}
-		
-		var nearbyObjects = GetTree().GetNodesInGroup("ObjectDurability").Cast<ObjectDurability>()
-			.Where(o => GetParent<Node3D>().GlobalPosition.DistanceTo(o.GlobalPosition) <= MyStats.GetEffectiveReach((Item_SO)null).max)
-			.ToList();
-
-		var primaryTarget = GetPerceivedHighestThreat();
-
-		foreach (var obj in nearbyObjects)
-		{
-			if (primaryTarget != null)
-			{
-				var visibility = LineOfSightManager.GetVisibility(MyStats, primaryTarget);
-				if (!visibility.HasLineOfSight && visibility.Reason.Contains("Cover"))
-				{
-					possibleActions.Add(new AIAction_AttackObject(this, obj, "Clear LoS"));
-				}
-			}
-			
-			if (MyStats.MyInventory?.GetEquippedItem(EquipmentSlot.MainHand) == null && obj.DebrisLootTable != null)
-			{
-				possibleActions.Add(new AIAction_AttackObject(this, obj, "Create Weapon"));
-			}
-			
-			if (obj.IsFlammable && MyStats.MyInventory?.GetEquippedItem(EquipmentSlot.MainHand)?.DamageInfo.Any(d => d.DamageType == "Fire") == true)
-			{
-				possibleActions.Add(new AIAction_AttackObject(this, obj, "Burn Hazard"));
-			}
-		}
-	}
-
-	if (MyStats.HasFeat("Improved Sunder")) 
-	{
-		foreach (var target in visibleTargets)
-		{
-			if (GetParent<Node3D>().GlobalPosition.DistanceTo(target.GlobalPosition) <= MyStats.GetEffectiveReach((Item_SO)null).max)
-			{
-				var targetInv = target.GetNodeOrNull<InventoryController>("InventoryController");
-				if (targetInv?.GetEquippedItem(EquipmentSlot.MainHand) != null || targetInv?.GetEquippedItem(EquipmentSlot.Shield) != null)
-				{
-					possibleActions.Add(new AIAction_Sunder(this, target));
-				}
-			}
-		}
-	}
-	return possibleActions;
+    if (MyStats.HasFeat("Improved Sunder")) 
+    {
+        foreach (var target in visibleTargets)
+        {
+            if (GetParent<Node3D>().GlobalPosition.DistanceTo(target.GlobalPosition) <= MyStats.GetEffectiveReach((Item_SO)null).max)
+            {
+                var targetInv = target.GetNodeOrNull<InventoryController>("InventoryController");
+                if (targetInv?.GetEquippedItem(EquipmentSlot.MainHand) != null || targetInv?.GetEquippedItem(EquipmentSlot.Shield) != null)
+                {
+                    possibleActions.Add(new AIAction_Sunder(this, target));
+                }
+            }
+        }
+    }
+    return possibleActions;
 }
 
 private void AddSoundContactReactionActions(List<HeardSoundContact> heardContacts, List<AIAction> possibleActions)

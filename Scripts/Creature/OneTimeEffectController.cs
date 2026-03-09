@@ -6,7 +6,7 @@ using System.Linq;
 // PURPOSE: Tracks charges of single-use special abilities, like Mythic Bless's roll-twice effect.
 // ATTACH TO: All creature prefabs (Child Node).
 // =================================================================================================
-public partial class OneTimeEffectController : Godot.Node
+public partial class OneTimeEffectController : GridNode
 {
 private Dictionary<string, int> effectCharges = new Dictionary<string, int>();
 

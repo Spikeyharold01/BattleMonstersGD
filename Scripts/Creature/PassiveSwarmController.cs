@@ -4,7 +4,7 @@ using Godot;
 // PURPOSE: Handles swarm auto-damage at end of turn.
 // ATTACH TO: Creature Scene (Child Node).
 // =================================================================================================
-public partial class PassiveSwarmController : Godot.Node
+public partial class PassiveSwarmController : GridNode
 {
 [Export]
 [Tooltip("The ability that defines the swarm's automatic damage (e.g., 3d6 + Distraction).")]

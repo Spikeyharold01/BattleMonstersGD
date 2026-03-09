@@ -6,7 +6,7 @@ using System.Collections.Generic;
 // PURPOSE: Manages passive Gaze attacks. Triggers at start of turn for all valid targets.
 // ATTACH TO: Creature Scenes (Child Node).
 // =================================================================================================
-public partial class PassiveGazeController : Godot.Node
+public partial class PassiveGazeController : GridNode
 {
 private CreatureStats myStats;
 private Ability_SO gazeAbility;

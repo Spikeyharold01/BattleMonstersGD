@@ -5,7 +5,7 @@ using System.Collections.Generic;
 // PURPOSE: Manages the "per day" usage limits for abilities like Channel Energy or domain powers.
 // ATTACH TO: All creature prefabs (as a child node of CreatureStats root).
 // =================================================================================================
-public partial class AbilityUsageController : Godot.Node
+public partial class AbilityUsageController : GridNode
 {
 // A dictionary to track the remaining uses for each "per day" ability.
 private Dictionary<Ability_SO, int> remainingUses = new Dictionary<Ability_SO, int>();

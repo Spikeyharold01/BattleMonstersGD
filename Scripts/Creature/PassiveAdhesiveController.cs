@@ -8,7 +8,7 @@ using System.Linq;
 // - Suppressed by Fire damage.
 // ATTACH TO: Adherer Scene (Child of CreatureStats or Root).
 // =================================================================================================
-public partial class PassiveAdhesiveController : Godot.Node
+public partial class PassiveAdhesiveController : GridNode
 {
 private CreatureStats myStats;
 public bool IsAdhesiveActive { get; private set; } = true;

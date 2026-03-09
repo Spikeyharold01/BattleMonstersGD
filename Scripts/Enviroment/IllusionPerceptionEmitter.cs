@@ -1,11 +1,11 @@
-using Godot;
+sing Godot;
 
 // =================================================================================================
 // FILE: IllusionPerceptionEmitter.cs (GODOT VERSION)
 // PURPOSE: Generic data-driven emitter for illusionary perception channels (sound/scent/thermal proxy).
 // ATTACH TO: Runtime child on illusion nodes that should project sensory cues.
 // =================================================================================================
-public partial class IllusionPerceptionEmitter : Godot.Node
+public partial class IllusionPerceptionEmitter : GridNode
 {
     private CreatureStats caster;
 
