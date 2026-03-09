@@ -47,7 +47,7 @@ public partial class CreateLightSourceEffect : AbilityEffectComponent
         // We only replace the caster's own previous cantrip-level light source (spell level 0)
         // to preserve existing project behavior.
         var existingLights = context.Caster.GetTree().GetNodesInGroup("LightSources");
-        foreach (GridNode n in existingLights)
+        foreach (Node n in existingLights)
         {
             if (n is LightSourceController lsc && lsc.Info.Caster == context.Caster)
             {
@@ -117,7 +117,7 @@ public partial class CreateLightSourceEffect : AbilityEffectComponent
         bool newSourceIsDarkness = LightData.IntensityChange < 0;
 
         var allLightSources = ((SceneTree)Engine.GetMainLoop()).GetNodesInGroup("LightSources");
-        foreach (GridNode node in allLightSources)
+        foreach (Node node in allLightSources)
         {
             if (node is not LightSourceController existingSource) continue;
             if (existingSource == lightController) continue;

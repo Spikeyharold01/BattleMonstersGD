@@ -101,7 +101,7 @@ public void BeginPlayerTurn()
 	var images = GetTree().GetNodesInGroup("ProjectedImages"); // Assuming group
 	// Or manual search if not grouped. Original used FindObjectsOfType.
 	// I will assume ProjectedImageController adds itself to group.
-	foreach(GridNode n in images)
+	foreach(Node n in images)
 	{
 		if (n is ProjectedImageController pic && pic.Caster == myStats)
 		{
@@ -263,7 +263,7 @@ private void HandleLeftClick(Vector2 mousePos)
 	if (result.Count > 0)
 	{
 		Vector3 hitPoint = (Vector3)result["position"];
-		GridNode collider = (GridNode)result["collider"]; // Godot collider is the body node
+		Node collider = (Node)result["collider"]; // Godot collider is the body node
 
 		if (currentState == PlayerTurnState.AwaitingInput)
 		{
