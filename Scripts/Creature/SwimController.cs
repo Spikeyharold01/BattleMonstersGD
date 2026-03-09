@@ -5,7 +5,7 @@ using System.Collections.Generic;
 // PURPOSE: Manages a creature's state while swimming, including breath and fatigue.
 // ATTACH TO: All creature scenes (as a child node of the CreatureStats root).
 // =================================================================================================
-public partial class SwimController : GridNode
+public partial class SwimController : Node
 {
 	
 private CreatureStats myStats;

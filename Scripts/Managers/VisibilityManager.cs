@@ -8,7 +8,7 @@ using System.Linq;
 // ATTACH TO: A persistent "GameManager" Node.
 // =================================================================================================
 
-public partial class VisibilityManager : GridNode
+public partial class VisibilityManager : Node
 {
     // A list containing a reference to every creature involved in the current combat.
     private List<CreatureStats> allCombatants = new List<CreatureStats>();

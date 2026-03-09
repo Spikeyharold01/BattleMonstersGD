@@ -5,7 +5,7 @@ using System.Linq;
 // FILE: SoulEngineController.cs
 // PURPOSE: Generic controller for constructs powered by a trapped soul/crucified body.
 // =================================================================================================
-public partial class SoulEngineController : GridNode
+public partial class SoulEngineController : Node
 {
     private CreatureStats myStats;
     

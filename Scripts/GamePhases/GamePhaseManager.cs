@@ -7,7 +7,7 @@ using System.Collections.Generic;
 ///
 /// It decides which phase is active and handles clean switching.
 /// </summary>
-public partial class GamePhaseManager : GridNode
+public partial class GamePhaseManager : Node
 {
     /// <summary>
     /// Sent after phase changes from one type to another.

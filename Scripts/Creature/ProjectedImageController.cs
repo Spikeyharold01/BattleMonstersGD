@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 // PURPOSE: Manages a Projected Image spell entity.
 // ATTACH TO: Projected Image prefab (Root Node).
 // =================================================================================================
-public partial class ProjectedImageController : GridNode
+public partial class ProjectedImageController : Node
 {
 public CreatureStats Caster { get; private set; }
 private CreatureStats myStats; // The stats of this image.

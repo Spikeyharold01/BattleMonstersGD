@@ -33,7 +33,7 @@ public enum TravelResolutionEvent
 /// surprise rounds, and determining victory or defeat.
 /// It acts as the central state machine for combat.
 /// </summary>
-public partial class TurnManager : GridNode
+public partial class TurnManager : Node
 {
     public static TurnManager Instance { get; private set; }
 

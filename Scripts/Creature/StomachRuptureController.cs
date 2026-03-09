@@ -4,7 +4,7 @@ using Godot;
 // FILE: StomachRuptureController.cs
 // PURPOSE: Tracks a creature's HP. When healed above the threshold, removes the ruptured stomach debuff.
 // =================================================================================================
-public partial class StomachRuptureController : GridNode
+public partial class StomachRuptureController : Node
 {
     private CreatureStats owner;
     private int hpWhenRuptured;
