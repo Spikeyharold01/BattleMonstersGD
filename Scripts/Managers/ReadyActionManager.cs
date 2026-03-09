@@ -40,7 +40,7 @@ public class ReadiedActionInfo
 /// Manages the state of all delaying or readying combatants. It acts as the central
 /// authority for resolving these interruptions to the normal turn order.
 /// </summary>
-public partial class ReadyActionManager : Godot.Node
+public partial class ReadyActionManager : GridNode
 {
     public static ReadyActionManager Instance { get; private set; }
 

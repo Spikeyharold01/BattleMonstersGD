@@ -23,9 +23,9 @@ public partial class TravelExitZone : Area3D
     /// <summary>
     /// If entering body is in Player group, emit completion signal.
     /// </summary>
-    private void OnBodyEntered(Node3D body)
+    private void OnBodyEntered(GridNode body)
     {
-        if (body != null && body.IsInGroup("Player"))
+        if (body.IsInGroup("Player"))
         {
             EmitSignal(SignalName.PlayerReachedExit);
         }

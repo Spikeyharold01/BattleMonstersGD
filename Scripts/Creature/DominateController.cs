@@ -12,7 +12,7 @@ public DominateCommandType CommandType;
 public Vector3 TargetPosition;
 public List<Vector3> PathToDestination;
 }
-public partial class DominateController : Godot.Node
+public partial class DominateController : GridNode
 {
 public CreatureStats Master { get; private set; }
 public DominateCommand CurrentCommand { get; private set; }

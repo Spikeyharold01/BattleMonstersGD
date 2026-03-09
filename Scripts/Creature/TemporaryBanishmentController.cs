@@ -5,7 +5,7 @@ using Godot;
 // PURPOSE: Generic runtime controller for temporary banishment/exile effects.
 // ATTACH TO: Creature root as child node, or create dynamically.
 // =================================================================================================
-public partial class TemporaryBanishmentController : Godot.Node
+public partial class TemporaryBanishmentController : GridNode
 {
     private CreatureStats owner;
     private Vector3 returnPosition;

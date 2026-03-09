@@ -4,7 +4,7 @@ using Godot;
 // PURPOSE: Manages the state of an active Mirror Image spell on a creature.
 // ATTACH TO: A creature at runtime when they cast Mirror Image (Child Node).
 // =================================================================================================
-public partial class MirrorImageController : Godot.Node
+public partial class MirrorImageController : GridNode
 {
 public int ImageCount { get; private set; }
 private float duration;

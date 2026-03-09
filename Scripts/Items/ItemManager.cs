@@ -12,7 +12,7 @@ using System.Linq;
 /// This singleton class is responsible for spawning, tracking, and removing items
 /// that are physically present in the game world (i.e., not in an inventory).
 /// </summary>
-public partial class ItemManager : Godot.Node
+public partial class ItemManager : GridNode
 {
     public static ItemManager Instance { get; private set; }
 

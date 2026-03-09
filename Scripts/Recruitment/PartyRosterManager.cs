@@ -180,8 +180,8 @@ public sealed class PartyRosterManager
         float candidateCorruption = candidate.GetCorruptionMetrics().CorruptionSeverityScore;
         float corruptionPressure = Mathf.Clamp(recruiterCorruption + candidateCorruption, 0f, 1.5f);
 
-        result.StartingMorale = Mathf.Clamp(result.StartingMorale - corruptionPressure * 0.15f, 0f, 1f);
-        result.StartingLoyalty = Mathf.Clamp(result.StartingLoyalty - corruptionPressure * 0.1f, 0f, 1f);
+        result.StartingMorale = Mathf.Clamp01(result.StartingMorale - corruptionPressure * 0.15f);
+        result.StartingLoyalty = Mathf.Clamp01(result.StartingLoyalty - corruptionPressure * 0.1f);
         result.DesertionRiskModifier += corruptionPressure * 0.25f;
 
         return result;

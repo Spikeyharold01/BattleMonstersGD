@@ -4,7 +4,7 @@ using Godot;
 // FILE: AnimatedObjectController.cs
 // PURPOSE: Tracks the tether between an animated object/tree and its creator.
 // =================================================================================================
-public partial class AnimatedObjectController : Godot.Node
+public partial class AnimatedObjectController : GridNode
 {
     public CreatureStats Creator { get; private set; }
     private float controlRange;

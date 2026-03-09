@@ -99,7 +99,7 @@ public override float GetAIEstimatedValue(EffectContext context)
 }
 }
 // Helper component for passing template data.
-public partial class CreatureTemplateHolder : Godot.Node
+public partial class CreatureTemplateHolder : GridNode
 {
 [Export] public CreatureTemplate_SO Template;
 }

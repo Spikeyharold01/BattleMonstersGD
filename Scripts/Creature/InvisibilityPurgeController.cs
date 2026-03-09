@@ -6,7 +6,7 @@ using System.Collections.Generic;
 // PURPOSE: Suppresses Invisibility on any creature within radius.
 // ATTACH TO: Caster (Child Node).
 // =================================================================================================
-public partial class InvisibilityPurgeController : Godot.Node
+public partial class InvisibilityPurgeController : GridNode
 {
     private CreatureStats caster;
     private float radius;

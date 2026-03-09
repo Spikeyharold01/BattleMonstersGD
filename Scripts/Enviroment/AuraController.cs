@@ -43,7 +43,7 @@ public class MagicAura
     }
 }
 
-public partial class AuraController : Godot.Node
+public partial class AuraController : GridNode
 {
     public List<MagicAura> Auras = new List<MagicAura>();
 	public override void _Ready()

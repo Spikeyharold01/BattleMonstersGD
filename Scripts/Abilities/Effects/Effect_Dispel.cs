@@ -176,7 +176,7 @@ public partial class Effect_Dispel : AbilityEffectComponent
 
         float valueOfDispel = mostPowerfulBuff.EffectData.AiTacticalTag.BaseValue;
         int dc = 11 + mostPowerfulBuff.SourceCreature.Template.CasterLevel;
-        float successChance = AutoSuccess ? 1f : Mathf.Clamp((10.5f + context.Caster.Template.CasterLevel - dc) / 20f, 0f, 1f);
+        float successChance = AutoSuccess ? 1f : Mathf.Clamp01((10.5f + context.Caster.Template.CasterLevel - dc) / 20f);
 
         if (successChance < 0.25f) return 0f;
 
