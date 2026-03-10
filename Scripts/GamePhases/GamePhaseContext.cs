@@ -10,7 +10,7 @@ public partial class ArenaStartContext : RefCounted
     /// <summary>
     /// Build a context object used during phase calls.
     /// </summary>
-    public GamePhaseContext(GridNode owner, Node3D phaseRoot, CreaturePersistenceService creaturePersistence, RecruitmentManager recruitment, PartyRosterManager partyRoster, IntelligenceSystemManager intelligence)
+    public GamePhaseContext(Node owner, Node3D phaseRoot, CreaturePersistenceService creaturePersistence, RecruitmentManager recruitment, PartyRosterManager partyRoster, IntelligenceSystemManager intelligence)
     {
         Owner = owner;
         PhaseRoot = phaseRoot;
@@ -23,7 +23,7 @@ public partial class ArenaStartContext : RefCounted
     /// <summary>
     /// The node that owns and runs phase switching.
     /// </summary>
-    public GridNode Owner { get; }
+    public Node Owner { get; }
 
     /// <summary>
     /// Where phase-specific runtime objects should be added.
@@ -89,7 +89,7 @@ public partial class ArenaStartContext : RefCounted
 /// - Arena systems can apply surprise-round mechanics without travel owning combat rules.
 /// - The source creature can be identified for telemetry, narration, and future counter-ambush extensions.
 /// </summary>
-public sealed class ArenaStartContext
+public partial class ArenaStartContext : RefCounted
 {
     public bool IsSurpriseAttack;
     public ulong SurpriseSourceCreatureId;
