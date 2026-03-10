@@ -187,7 +187,7 @@ public sealed class PartyRosterManager
         return result;
     }
 
-    public bool RecruitCreature(CreatureStats recruiter, CreatureStats defeatedCandidate, GridNode spawnParent, Vector3 spawnPosition, CreaturePersistenceService persistence, out string failureReason)
+    public bool RecruitCreature(CreatureStats recruiter, CreatureStats defeatedCandidate, Node spawnParent, Vector3 spawnPosition, CreaturePersistenceService persistence, out string failureReason)
     {
         failureReason = null;
 

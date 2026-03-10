@@ -185,7 +185,7 @@ private void UpdatePreviews()
 	if (mainCamera == null) return;
 	
 	Vector2 mousePos = GetViewport().GetMousePosition();
-	var spaceState = GetWorld3D().DirectSpaceState;
+	var spaceState = myStats.GetWorld3D().DirectSpaceState;
 	var from = mainCamera.ProjectRayOrigin(mousePos);
 	var to = from + mainCamera.ProjectRayNormal(mousePos) * 100f;
 	
@@ -212,7 +212,7 @@ private void UpdatePreviews()
 				var shape = selectedAbility.AreaOfEffect.Shape;
 				if (shape == AoEShape.Line || shape == AoEShape.Cone)
 				{
-					Vector3 origin = isControllingImage && myImageController != null ? myImageController.GlobalPosition : GetParent<Node3D>().GlobalPosition;
+					Vector3 origin = isControllingImage && myImageController != null ? myImageController.GetParent<Node3D>().GlobalPosition : GetParent<Node3D>().GlobalPosition;
 					currentAoeTemplate.GlobalPosition = origin;
 					
 					Vector3 dir = (hitPoint - origin).Normalized();
@@ -250,7 +250,7 @@ private void UpdatePreviews()
 
 private void HandleLeftClick(Vector2 mousePos)
 {
-	var spaceState = GetWorld3D().DirectSpaceState;
+	var spaceState = myStats.GetWorld3D().DirectSpaceState;
 	var from = mainCamera.ProjectRayOrigin(mousePos);
 	var to = from + mainCamera.ProjectRayNormal(mousePos) * 100f;
 	
@@ -263,7 +263,7 @@ private void HandleLeftClick(Vector2 mousePos)
 	if (result.Count > 0)
 	{
 		Vector3 hitPoint = (Vector3)result["position"];
-		Node collider = (Node)result["collider"]; // Godot collider is the body node
+		Node3D collider = (Node3D)result["collider"]; // Godot collider is the body node
 
 		if (currentState == PlayerTurnState.AwaitingInput)
 		{
@@ -423,7 +423,7 @@ public void OnSelectHover()
 	}
 }
 
-private void HandleAbilityTargetingClick(GridNode collider, Vector3 hitPoint)
+private void HandleAbilityTargetingClick(Node3D collider, Vector3 hitPoint)
 {
 	if (selectedAbility == null) { CancelAction(); return; }
 
@@ -435,16 +435,15 @@ private void HandleAbilityTargetingClick(GridNode collider, Vector3 hitPoint)
 	{
 		CreatureStats targetCreature = collider as CreatureStats ?? collider.GetNodeOrNull<CreatureStats>("CreatureStats");
 		ObjectDurability targetObjectDurability = collider.GetNodeOrNull<ObjectDurability>("ObjectDurability") ?? collider as ObjectDurability;
-		GridNode targetObject = collider;
+		Node3D targetObject = collider;
 		
-		bool isValidTarget = (targetCreature != null && IsTargetValid(targetCreature, targetObject as Node3D)) || (targetObjectDurability != null);
+		bool isValidTarget = (targetCreature != null && IsTargetValid(targetCreature, targetObject)) || (targetObjectDurability != null);
 
 		if (isValidTarget)
 		{
 			if (IsActionValidAgainstTarget(selectedAbility, targetCreature))
 			{
-				// Convert GameObject -> Node
-				ResolveAbility(targetCreature, targetObject as Node3D, (targetObject as Node3D).GlobalPosition);
+				ResolveAbility(targetCreature, targetObject, targetObject.GlobalPosition);
 			}
 			else
 			{
@@ -622,7 +621,7 @@ private void PrepareForTargeting()
 		}
 	GD.Print($"Selected ability: {selectedAbility.AbilityName}. Waiting for target.");
 }
-private void ResolveAbility(CreatureStats creature, GridNode obj, Vector3 point)
+private void ResolveAbility(CreatureStats creature, Node3D obj, Vector3 point)
 {
 // --- NEW: SUGGESTION MODE LOGIC ---
 if (isControllingAlly)

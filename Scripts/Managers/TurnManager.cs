@@ -715,8 +715,9 @@ public partial class TurnManager : Node
         if (decision == RecruitmentDecision.Recruit)
         {
             Vector3 spawnPosition = pendingRecruitLeader.GlobalPosition + new Vector3(1.5f, 0f, 1.5f);
-            GridNode spawnParent = pendingRecruitLeader.GetParent();
-            success = PartyRosterRuntime.ActiveManager?.RecruitCreature(pendingRecruitLeader, pendingRecruitCandidate, spawnParent, spawnPosition, CreaturePersistenceService.Active, out string failureReason) == true;
+            Node spawnParent = pendingRecruitLeader.GetParent();
+            string failureReason = string.Empty;
+            success = PartyRosterRuntime.ActiveManager?.RecruitCreature(pendingRecruitLeader, pendingRecruitCandidate, spawnParent, spawnPosition, CreaturePersistenceService.Active, out failureReason) == true;
             if (!success)
             {
                 GD.PrintErr($"Recruitment failed: {failureReason}");

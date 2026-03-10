@@ -375,7 +375,7 @@ public partial class Pathfinding : Node
         // Replicating OverlapSphere Logic
         uint creatureMask = 2; // Assuming Layer 2 is creatures, needs correct layer bit
         // Helper function for overlap check
-        var spaceState = Instance.GetWorld3D().DirectSpaceState;
+        var spaceState = GridManager.Instance.GetWorld3D().DirectSpaceState;
         var shape = new SphereShape3D { Radius = GridManager.Instance.nodeRadius * 0.9f };
         var query = new PhysicsShapeQueryParameters3D { Shape = shape, Transform = new Transform3D(Basis.Identity, node.worldPosition), CollisionMask = creatureMask };
         var occupants = spaceState.IntersectShape(query);
@@ -411,7 +411,7 @@ public partial class Pathfinding : Node
     private bool IsSquareOccupiedForCharge(GridNode node, CreatureStats mover, CreatureStats chargeTarget)
     {
         uint creatureMask = 2; // Needs actual mask
-        var spaceState = GetWorld3D().DirectSpaceState;
+        var spaceState = GridManager.Instance.GetWorld3D().DirectSpaceState;
         var shape = new SphereShape3D { Radius = GridManager.Instance.nodeRadius * 0.9f };
         var query = new PhysicsShapeQueryParameters3D { Shape = shape, Transform = new Transform3D(Basis.Identity, node.worldPosition), CollisionMask = creatureMask };
         var occupants = spaceState.IntersectShape(query);
