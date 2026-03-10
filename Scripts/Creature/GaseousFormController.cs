@@ -5,7 +5,7 @@ using System;
 // PURPOSE: Enforces Gaseous Form rules (No Attacks, Flight, Pass Walls).
 // ATTACH TO: Creature Scenes via AddChild in Effect logic (or manually).
 // =================================================================================================
-public partial class GaseousFormController : Godot.Node
+public partial class GaseousFormController : Node
 {
 private CreatureStats myStats;
 private ActionManager actionManager;

@@ -145,7 +145,8 @@ public static class AllyDecisionNarrativeGenerator
     private static string GeneratePrimaryReason(AIController controller, SuggestedAction suggestion, TurnPlan plan)
     {
         float hpPct = controller.MyStats.CurrentHP / (float)Math.Max(1, controller.MyStats.Template.MaxHP);
-        float threatScore = plan.EvaluateThreatScore(controller); // Use existing scoring
+		 float threatScore = Mathf.Clamp(plan.Score / 200f, 0f, 1f); // Safely derive from the plan's raw score
+        
         float survival = hpPct < 0.4f ? 1f : 0f;
 
         if (survival > 0f) return "it prioritizes survival due to low health";
@@ -168,13 +169,13 @@ public static class AllyDecisionNarrativeGenerator
     {
         List<string> options = new List<string>();
 
-        if (plan.Actions.Any(a => a is AIAction_Movement))
+         if (plan.Actions.Any(a => a is AIAction_MoveToPosition || a is AIAction_MoveToFlank || a is AIAction_FiveFootStep || a is AIAction_Charge))
             options.Add("to gain a tactical advantage of terrain");
-        if (plan.Actions.Any(a => a is AIAction_Combat || a is AIAction_Magic))
+        if (plan.Actions.Any(a => a is AIAction_Attack || a is AIAction_FullAttack || a is AIAction_RangedAttack || a is AIAction_CastGenericAbility || a is AIAction_SingleNaturalAttack))
             options.Add("to maximize its offensive impact");
-        if (plan.Actions.Any(a => a is AIAction_Utility))
+        if (plan.Actions.Any(a => a is AIAction_SwitchWeapon || a is AIAction_PickupItem || a is AIAction_Search))
             options.Add("to support allies effectively");
-        if (plan.Actions.Any(a => a is AIAction_Defensive))
+        if (plan.Actions.Any(a => a is AIAction_TotalDefense || a is AIAction_FightDefensively || a is AIAction_Withdraw || a is AIAction_Hide || a is AIAction_Flee))
             options.Add("to minimize risk and exposure");
         if (options.Count == 0) options.Add("after careful assessment of the battlefield");
 

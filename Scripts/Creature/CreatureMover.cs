@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 // ATTACH TO: Creature Root Node.
 // =================================================================================================
 
-public partial class CreatureMover : Godot.Node
+public partial class CreatureMover : Node
 {
     // The visual speed of the creature's movement in units per second.
     [Export] public float MoveSpeed = 5f;
@@ -133,7 +133,7 @@ public partial class CreatureMover : Godot.Node
     /// Converts global wind into the effective wind the creature actually experiences.
     /// Output expected: a potentially reduced wind category when protective effects are active.
     /// </summary>
-    private WindStrength GetEffectiveWindStrength(WindStrength incomingWind)
+    public WindStrength GetEffectiveWindStrength(WindStrength incomingWind)
     {
         int reductionSteps = myStats?.MyEffects?.GetWindSeverityReductionSteps() ?? 0;
         int adjustedValue = Mathf.Max((int)WindStrength.None, (int)incomingWind - reductionSteps);
@@ -433,7 +433,7 @@ public partial class CreatureMover : Godot.Node
         if (WeatherManager.Instance != null && WeatherManager.Instance.CurrentWeather != null)
         {
             var weather = WeatherManager.Instance.CurrentWeather;
-            WindStrength effectiveWind = mover.GetEffectiveWindStrength(weather.WindStrength);
+            WindStrength effectiveWind = mover.GetNodeOrNull<CreatureMover>("CreatureMover")?.GetEffectiveWindStrength(weather.WindStrength) ?? weather.WindStrength;
             if (mover.Template.MovementType == MovementType.Flying)
             {
                 if (effectiveWind == WindStrength.Strong) baseSpeed *= 0.5f;

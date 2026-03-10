@@ -7,7 +7,7 @@ using System.Linq;
 // PURPOSE: Monitors the grid and automatically applies TerrainTransformRules (visuals, stats, buffs).
 // ATTACH TO: Creature prefabs that change form based on environment (e.g., Akhlut).
 // =================================================================================================
-public partial class PassiveTerrainTransformController : Godot.Node
+public partial class PassiveTerrainTransformController : Node
 {
     [Export]
     [Tooltip("List of terrain transformation rules this creature obeys.")]

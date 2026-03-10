@@ -16,6 +16,7 @@ public partial class Effect_CreateZone : AbilityEffectComponent
 [ExportGroup("Dimensions")]
 [Export] public float Radius = 20f;
 [Export] public float MythicRadius = 50f;
+[Export] public bool UseAbilityShapeForZone = true;
 
 [ExportGroup("Duration")]
 [Export] public int DurationRounds = -1;

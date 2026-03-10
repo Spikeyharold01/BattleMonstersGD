@@ -105,7 +105,8 @@ public partial class Effect_AlterTerrain : AbilityEffectComponent
                 foreach(var ally in allies)
                 {
                     float dist = ally.GlobalPosition.DistanceTo(context.AimPoint);
-                    if (dist <= ability.AreaOfEffect.Range + 5f) // Adjacent or inside
+                     float range = context.Ability?.AreaOfEffect?.Range ?? 20f; // Fallback just in case
+                    if (dist <= range + 5f) // Adjacent or inside
                     {
                         score += 50f; // High value to clear fire near friends
                     }

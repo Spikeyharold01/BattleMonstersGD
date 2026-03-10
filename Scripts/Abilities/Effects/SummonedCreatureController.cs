@@ -5,7 +5,7 @@ using Godot;
 // PURPOSE: Tracks summoned creature lifecycle and expires summon duration.
 // ATTACH TO: Added dynamically to summoned units.
 // =================================================================================================
-public partial class SummonedCreatureController : Godot.Node
+public partial class SummonedCreatureController : Node
 {
     private int durationRounds;
     private CreatureStats caster;
@@ -43,7 +43,7 @@ public partial class SummonedCreatureController : Godot.Node
 
     public void Unsummon()
     {
-        GridNode parent = GetParent();
+        Godot.Node parent = GetParent();
         if (parent == null) return;
 
         GD.Print($"{parent.Name} disappears (summon duration expired).");

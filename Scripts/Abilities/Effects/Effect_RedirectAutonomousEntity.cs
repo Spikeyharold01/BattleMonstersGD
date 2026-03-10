@@ -10,7 +10,7 @@ public partial class Effect_RedirectAutonomousEntity : AbilityEffectComponent
     {
         var entities = context.Caster.GetTree().GetNodesInGroup("AutonomousEntities");
         
-        foreach (GridNode n in entities)
+        foreach (Node n in entities)
         {
             if (n is AutonomousEntityController entity && entity.Caster == context.Caster && entity.EntityGroupId == TargetEntityIdentifier)
             {

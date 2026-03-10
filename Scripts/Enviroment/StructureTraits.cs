@@ -6,7 +6,7 @@ using Godot;
 //          Attached to ANY environmental object (Magical or Physical).
 // =================================================================================================
 [GlobalClass]
-public partial class StructureTraits : Godot.Node
+public partial class StructureTraits : Node
 {
     [ExportGroup("Visibility")]
     [Export] public bool IsTransparent = false; // Wall of Force = True, Stone = False

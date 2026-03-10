@@ -114,7 +114,7 @@ public override async Task Execute()
     }
     controller.MyActionManager.UseAction(ActionType.Standard);
     // Note: ResolveGrapple is async Task now in our conversion
-    await CombatManeuvers.ResolveGrappleAsync(controller.MyStats, target, false);
+	await CombatManeuvers.ResolveGrappleAsync(controller.MyStats, target, false, null);
     await controller.ToSignal(controller.GetTree().CreateTimer(1.0f), "timeout");
 }
 }

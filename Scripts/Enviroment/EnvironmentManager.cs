@@ -18,7 +18,7 @@ static BiomeEffects()
     WaterBreathingEffect.DurationInRounds = 0; // Permanent for the combat
 }
 }
-public partial class EnvironmentManager : Godot.Node
+public partial class EnvironmentManager : Node
 {
 public static EnvironmentManager Instance { get; private set; }
 

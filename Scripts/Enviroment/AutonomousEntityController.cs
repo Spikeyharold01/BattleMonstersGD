@@ -181,7 +181,17 @@ public partial class AutonomousEntityController : Node3D
                     int saveDC = payloadAbility.SavingThrow.BaseDC;
                     if (payloadAbility.SavingThrow.IsDynamicDC)
                     {
-                        saveDC = 10 + payloadAbility.SpellLevel + Caster.GetAbilityScore(payloadAbility.SavingThrow.DynamicDCStat);
+                      int statMod = payloadAbility.SavingThrow.DynamicDCStat switch
+                        {
+                            AbilityScore.Strength => Caster.StrModifier,
+                            AbilityScore.Dexterity => Caster.DexModifier,
+                            AbilityScore.Constitution => Caster.ConModifier,
+                            AbilityScore.Intelligence => Caster.IntModifier,
+                            AbilityScore.Wisdom => Caster.WisModifier,
+                            AbilityScore.Charisma => Caster.ChaModifier,
+                            _ => 0
+                        };
+                        saveDC = 10 + payloadAbility.SpellLevel + statMod;
                     }
                     
                     int saveRoll = RollManager.Instance.MakeD20Roll(CurrentTarget);

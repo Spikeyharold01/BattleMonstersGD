@@ -97,8 +97,7 @@ public override float GetAIEstimatedValue(EffectContext context)
     // 2. Choke point logic
     GridNode centerNode = GridManager.Instance.NodeFromWorldPoint(aimPoint);
     int radiusInNodes = Mathf.FloorToInt(radius / GridManager.Instance.nodeDiameter);
-    int unwalkableNeighbors = 0;
-    int totalNeighbors = 0;
+
     
     // Simulating double loop
     // ... (Logic identical to Unity, just syntax) ...

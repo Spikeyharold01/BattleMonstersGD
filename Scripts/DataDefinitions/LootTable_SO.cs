@@ -18,7 +18,7 @@ public partial class LootTable_SO : Resource
     [Export] public Godot.Collections.Array<LootDrop> LootDrops = new();
 
     // In Godot, you must provide the 'parent' node to add the spawned items to the scene tree.
-    public void SpawnLoot(GridNode parent, Vector3 position)
+     public void SpawnLoot(Godot.Node parent, Vector3 position)
     {
         foreach (var drop in LootDrops)
         {

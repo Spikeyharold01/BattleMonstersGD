@@ -39,7 +39,7 @@ public enum SaveEffect { None, Negates, HalfDamage, Partial }
 public enum UsageType { AtWill, PerDay, CooldownDice, CooldownDuration }
 public enum DCRule { BaseDC, Opposed_CMD }
 public enum MagicSchool { Universal, Abjuration, Conjuration, Divination, Enchantment, Evocation, Illusion, Necromancy, Transmutation }
-public enum ActionType { Standard, Move, Swift, FullRound, Immediate, Free, FiveFootStep, NotAnAction }
+public enum ActionType { Standard, Move, Swift, FullRound, Immediate, Free, NotAnAction, FiveFootStep }
 
 public enum AbilityCategory { Spell, Feat, SpecialAttack, SkillAction }
 public enum SpecialAbilityType { None, Ex, Sp, Su }
@@ -49,7 +49,7 @@ public enum TargetableEntityType { CreaturesOnly, ObjectsOnly, CreaturesAndObjec
 
 public enum AbilityScore { None, Strength, Dexterity, Constitution, Intelligence, Wisdom, Charisma }
 public enum MovementType { Ground, Flying, Burrowing, Swimming }
-public enum CreatureSize { Fine, Diminituve, Diminutive, Tiny, Small, Medium, Large, Huge, Gargantuan, Colossal }
+public enum CreatureSize { Fine, Diminituve, Diminutive = Diminituve, Tiny, Small, Medium, Large, Huge, Gargantuan, Colossal }
 public enum CreatureType { None, Aberration, Animal, Construct, Dragon, Fey, Humanoid, MagicalBeast, MonstrousHumanoid, Ooze, Outsider, Plant, Undead, Vermin, Elemental }
 public enum SkillType { Acrobatics, Appraise, Balance, Bluff, Climb, Concentration, Craft, DecipherScript, Diplomacy, DisableDevice, Disguise, EscapeArtist, Fly, GatherInformation, HandleAnimal, Heal, Hide, Intimidate, Intimidation, Jump, Knowledge, KnowledgeArcana, KnowledgeDungeoneering, KnowledgeEngineering, KnowledgeGeography, KnowledgeHistory, KnowledgeLocal, KnowledgeNature, KnowledgeNobility, KnowledgePlanes, KnowledgeReligion, Linguistics, Listen, MoveSilently, OpenLock, Perception, Perform, Profession, Ride, Search, SenseMotive, SleightOfHand, Spellcraft, Spot, Stealth, Survival, Swim, Tumble, UseMagicDevice, UseRope, None }
 public enum FlyManeuverability { Clumsy, Poor, Average, Good, Perfect }
@@ -74,7 +74,7 @@ public enum WeaponHandedness { Light, OneHanded, TwoHanded }
 public enum WeaponMaterial { Normal, Adamantine, ColdIron, Silver, Mithral, Darkwood, Wood }
 
 public enum FeatType { Passive_StatBonus, Activated_Action, CombatOption_Toggle }
-public enum ImmunityType { None, MindAffecting, Paralysis, Poison, Sleep, Stun, Disease, DeathEffects, NecromancyEffects, FortitudeSaves_NoDamage, FortitudeSaves_Damage, NonlethalDamage, AbilityDamage, AbilityDrain, Fatigue, Exhaustion, EnergyDrain, Polymorph, PhysicalAbilityDamage, Fear }
+public enum ImmunityType { None, MindAffecting, Paralysis, Poison, Sleep, Stun, Disease, DeathEffects, NecromancyEffects, FortitudeSaves_NoDamage, FortitudeSaves_Damage, NonlethalDamage, AbilityDamage, AbilityDrain, Fatigue, Exhaustion, EnergyDrain, Polymorph, PhysicalAbilityDamage, Fear  }
 
 public enum HealthState { Any, FullHealth, Wounded, Dying }
 public enum Relationship { Any, Ally, Enemy }
@@ -89,7 +89,7 @@ public enum WindStrength
     Moderate,   // A steady wind, could apply minor penalties.
     Strong,     // A gale that significantly impedes movement and attacks.
     Severe,     // A storm-force wind, major penalties and potential damage.
-    Windstorm,
+    Windstorm = Severe,
     Hurricane,
     Tornado
 }

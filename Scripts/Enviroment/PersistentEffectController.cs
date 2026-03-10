@@ -13,6 +13,7 @@ public int InstanceID;
 public string EffectName;
 public string Description;
 public Ability_SO SourceAbility;
+public bool IsUndispellable;
 public CreatureStats Caster;
 public int SpellLevel;
 public int SaveDC;

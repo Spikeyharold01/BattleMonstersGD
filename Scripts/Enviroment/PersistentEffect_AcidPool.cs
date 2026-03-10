@@ -126,7 +126,7 @@ public void ApplyTurnStartEffects(CreatureStats creature)
     creature.TakeDamage(damageRoll, "Acid", null, null, null, (finalDamage) => {
         if (finalDamage == 0 && damageRoll > 0)
         {
-            CombatMemory.RecordWeaponEffectivenessFeedback(creature, GetAcidPseudoWeapon(), 0, damageRoll);
+            AITacticalMatrix.RecordWeaponEffectivenessFeedback(creature, GetAcidPseudoWeapon(), 0, damageRoll);
             CombatMemory.RecordIdentifiedTrait(creature, "Immunity:Acid");
         }
     });

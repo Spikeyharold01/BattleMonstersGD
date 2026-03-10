@@ -220,17 +220,24 @@ public static class CombatCalculations
     internal static bool IsNodeWalkable(CreatureStats attacker, GridNode startNode, GridNode targetNode)
     {
         // Now calling the real method from the Pathfinding class
-        return Pathfinding.Instance.IsNodeWalkable(attacker, startNode, targetNode);
+		return Pathfinding.IsNodeWalkable(attacker, startNode, targetNode);
+
     }
 
     internal static bool IsSquareOccupied(GridNode node, CreatureStats creatureToIgnore)
     {
        // Godot note: Pathfinding should be a singleton or accessible static
-       return Pathfinding.Instance.IsSquareOccupied(node, creatureToIgnore);
+       return Pathfinding.IsSquareOccupied(node, creatureToIgnore);
     }
 
     internal static VisibilityResult GetVisibilityFromPoint(Vector3 position, Vector3 originPoint)
     {
+        // Now calling the real, static method from the LineOfSightManager class
+        // Note: We need a dummy context for the Raycast usually, passing null or a global context if static
+        // Assuming LineOfSightManager uses a static accessor to PhysicsDirectSpaceState or passed in Context.
+        // For strict port, we assume the Unity version had a static method.
+        // In Godot, LoSManager usually needs the World3D. 
+        // We will assume GridManager.Instance is a valid context node.
         return LineOfSightManager.GetVisibilityFromPoint(GridManager.Instance, position, originPoint);
     }
 

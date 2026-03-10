@@ -37,7 +37,7 @@ public partial class ScentGlyphRuntime : Node3D
         glyph.Initialize(scent);
     }
 
-    private sealed class ScentGlyphInstance : Node3D
+    private sealed partial class ScentGlyphInstance : Node3D
     {
         private const float GroundOffset = 0.08f;
         private ScentEvent scent;

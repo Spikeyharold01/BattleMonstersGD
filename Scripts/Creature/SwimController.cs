@@ -5,7 +5,7 @@ using System.Collections.Generic;
 // PURPOSE: Manages a creature's state while swimming, including breath and fatigue.
 // ATTACH TO: All creature scenes (as a child node of the CreatureStats root).
 // =================================================================================================
-public partial class SwimController : Godot.Node
+public partial class SwimController : Node
 {
 	
 private CreatureStats myStats;
@@ -93,7 +93,7 @@ public void OnTurnStart()
             myStats.TakeDamage(dmg, "Acid", null, null, null, null, true); 
         }
     }
-	
+	    bool isNativeAquatic = myStats.Template.NaturalEnvironmentProperties != null && myStats.Template.NaturalEnvironmentProperties.Contains(EnvironmentProperty.Aquatic);
 	// Rule: A paralyzed swimmer cannot swim and may drown.
         // We simulate this by forcing them underwater immediately and treating it as "Breath Holding" failure eventually.
         // Or simpler: If Paralyzed, treat as if underwater even if on surface?
@@ -111,7 +111,7 @@ public void OnTurnStart()
 
 // --- BREATHING CHECK ---
     // Native aquatic creatures, those with Water Breathing, and creatures with No Breath do not need to hold their breath.
-    bool isNativeAquatic = myStats.Template.NaturalEnvironmentProperties != null && myStats.Template.NaturalEnvironmentProperties.Contains(EnvironmentProperty.Aquatic);
+
     
     if (isNativeAquatic || myStats.MyEffects.HasEffect("Water Breathing") || myStats.HasSpecialRule("No Breath"))
     {
@@ -127,7 +127,7 @@ public void OnTurnStart()
     {
         if (isUnderwater)
         {
-            var body = GetParent<Node3D>();
+           
             body.GlobalPosition += new Vector3(0, 60f, 0); // Rise 60 ft towards surface
             
             GridNode newNode = GridManager.Instance.NodeFromWorldPoint(body.GlobalPosition);

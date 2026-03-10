@@ -25,7 +25,7 @@ public partial class TravelExitZone : Area3D
     /// </summary>
     private void OnBodyEntered(Node3D body)
     {
-        if (body != null && body.IsInGroup("Player"))
+        if (body.IsInGroup("Player"))
         {
             EmitSignal(SignalName.PlayerReachedExit);
         }

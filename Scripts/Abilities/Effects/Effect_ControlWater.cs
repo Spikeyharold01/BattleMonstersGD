@@ -69,7 +69,16 @@ public partial class Effect_ControlWater : AbilityEffectComponent
                     int dc = ability.SavingThrow.BaseDC;
                     if (ability.SavingThrow.IsDynamicDC)
                     {
-                        int statMod = context.Caster.GetAbilityScore(ability.SavingThrow.DynamicDCStat);
+                        int statMod = ability.SavingThrow.DynamicDCStat switch
+                        {
+                            AbilityScore.Strength => context.Caster.StrModifier,
+                            AbilityScore.Dexterity => context.Caster.DexModifier,
+                            AbilityScore.Constitution => context.Caster.ConModifier,
+                            AbilityScore.Intelligence => context.Caster.IntModifier,
+                            AbilityScore.Wisdom => context.Caster.WisModifier,
+                            AbilityScore.Charisma => context.Caster.ChaModifier,
+                            _ => 0
+                        };
                         dc = 10 + ability.SpellLevel + statMod;
                     }
 

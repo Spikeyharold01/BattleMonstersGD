@@ -73,7 +73,7 @@ public partial class Effect_UnhallowAura : AbilityEffectComponent
 
         // --- SPAWN THE AURA ---
         // If mobile, anchor to creature. If standalone spell, anchor to the targeted ground.
-        Node3D anchor = IsMobile ? caster : caster.GetTree().CurrentScene;
+        Node anchor = IsMobile ? (Node)caster : caster.GetTree().CurrentScene;
         Vector3 spawnPos = IsMobile ? Vector3.Zero : context.AimPoint;
 
         var auraObj = new Node3D { Name = "UnhallowAuraController" };

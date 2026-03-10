@@ -111,7 +111,7 @@ public static class LineOfSightManager
             var hit = spaceState.IntersectRay(query);
             if (hit.Count == 0) return true; // Clear path
 
-            GridNode collider = (GridNode)hit["collider"];
+            Node collider = (Node)hit["collider"];
             
             // Check for StructureTraits component on the collider or its parent
             var structure = collider.GetNodeOrNull<StructureTraits>("StructureTraits") ?? 
@@ -188,6 +188,24 @@ public static class LineOfSightManager
                     result.Reason = "Heavy Snow";
                 }
             }
+        }
+
+        return result;
+    }
+	 // NEW: Generic visibility helper for points on the map instead of specific creatures
+    public static VisibilityResult GetVisibilityFromPoint(Node3D context, Vector3 viewerPosition, Vector3 targetPosition)
+    {
+        var result = new VisibilityResult();
+        
+        if (HasLineOfEffect(context, viewerPosition + Vector3.Up * 1.5f, targetPosition + Vector3.Up * 0.5f))
+        {
+            result.HasLineOfEffect = true;
+            result.HasLineOfSight = true;
+        }
+        else
+        {
+            result.HasLineOfEffect = false;
+            result.HasLineOfSight = HasVisualLineOfSight(context, viewerPosition + Vector3.Up * 1.5f, targetPosition + Vector3.Up * 0.5f);
         }
 
         return result;

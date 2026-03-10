@@ -4,7 +4,7 @@ using Godot;
 // PURPOSE: Controls logic for an individual burning object (hazard area).
 // ATTACH TO: Objects that are burning (as a Child Node).
 // =================================================================================================
-public partial class BurningObjectController : Godot.Node
+public partial class BurningObjectController : Node
 {
 private float tickTimer = 1.0f; // Deal damage every second
 private float duration = 12f; // Burn for 2 rounds

@@ -16,7 +16,7 @@ public sealed class CreaturePersistenceService
     public static CreaturePersistenceService Active { get; private set; }
 
     // Hidden storage parent used while switching phases.
-    private readonly GridNode _storageRoot;
+    private readonly Node _storageRoot;
 
     // All creatures managed by phase transitions.
     private readonly List<CreatureStats> _persistentCreatures = new List<CreatureStats>();
@@ -24,7 +24,7 @@ public sealed class CreaturePersistenceService
     /// <summary>
     /// Create the service with a storage node.
     /// </summary>
-    public CreaturePersistenceService(GridNode storageRoot)
+    public CreaturePersistenceService(Node storageRoot)
     {
         _storageRoot = storageRoot;
         Active = this;
@@ -109,7 +109,7 @@ public sealed class CreaturePersistenceService
     /// <summary>
     /// Reparent a node but keep its world position/rotation.
     /// </summary>
-    private static void ReparentPreservingTransform(GridNode child, GridNode newParent)
+    private static void ReparentPreservingTransform(Node child, Node newParent)
     {
         if (child == null || newParent == null || child.GetParent() == null) return;
 

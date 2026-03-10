@@ -11,7 +11,7 @@ public partial class Effect_MoveOwnedZone : AbilityEffectComponent
     {
         // Find zone owned by caster
         var zones = context.Caster.GetTree().GetNodesInGroup(ZoneGroup);
-        foreach(GridNode n in zones)
+        foreach(Node n in zones)
         {
             if (n is PersistentEffect_Whirlpool pool) // Or Generic Interface
             {

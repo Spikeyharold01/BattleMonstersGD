@@ -6,7 +6,7 @@ using Godot;
 // ATTACH TO: A persistent "GameManager" Node or Autoload.
 // =================================================================================================
 
-public partial class TimeManager : Godot.Node
+public partial class TimeManager : Node
 {
     public static TimeManager Instance { get; private set; }
 

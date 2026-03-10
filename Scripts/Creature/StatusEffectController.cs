@@ -8,7 +8,7 @@ using System.Linq;
 // ATTACH TO: Creature Root Node (as child or main script component).
 // =================================================================================================
 
-public partial class StatusEffectController : Godot.Node
+public partial class StatusEffectController : Node
 {
     /// ARCHITECTURAL NOTICE:
     /// Traditional level loss / negative levels are replaced with
@@ -475,10 +475,6 @@ public partial class StatusEffectController : Godot.Node
         return total;
     }
 
-    public int GetTotalModifier(StatToModify stat, CreatureStats source = null)
-    {
-        return GetTotalModifier(stat, source, "");
-    }
 
     public int GetConditionalSaveBonus(SaveCondition condition)
     {
@@ -526,29 +522,8 @@ public partial class StatusEffectController : Godot.Node
         {
             var activeEffect = ActiveEffects[i];
 
-            // Handle new recurring save system if effect component exists
-            // Since EffectComponents are Resources in Godot, we check list
-            // Assuming Effect_RecurringSave is a type of AbilityEffectComponent
-            var recurringSaveEffect = activeEffect.EffectData.EffectComponents.OfType<Effect_RecurringSave>().FirstOrDefault();
-
-            if (recurringSaveEffect != null)
-            {
-                if (recurringSaveEffect.AttemptRecurringSave(myStats, activeEffect.SourceCreature))
-                {
-                    GD.PrintRich($"[color=green]Success! The effect of '{activeEffect.EffectData.EffectName}' ends.[/color]");
-
-                    if (activeEffect.EffectData.EffectName == "Wrenching Spasms")
-                    {
-                        int durationInRounds = 10 * 60 * 24;
-                        ApplyImmunityEffect(activeEffect.SourceCreature, "Immunity to Wrenching Spasms", durationInRounds);
-                    }
-
-                    ActiveEffects.RemoveAt(i);
-                    continue;
-                }
-            }
-
             if (activeEffect.IsSuppressed || !activeEffect.EffectData.AllowsRecurringSave) continue;
+
 
             if (activeEffect.EffectData.RecurringSaveRequiresIntelligence && myStats.Template.Intelligence < 3)
             {
@@ -940,7 +915,7 @@ private void HandleSmokeInhalation()
             return 0;
         }
 
-        long sourceId = source?.GetInstanceId() ?? 0;
+        long sourceId = source != null ? (long)source.GetInstanceId() : 0L;
         CorruptionStackInstance existing = ActiveCorruptions.FirstOrDefault(c => c.SourceID == sourceId && c.CorruptionId == definition.CorruptionId);
         if (existing == null)
         {

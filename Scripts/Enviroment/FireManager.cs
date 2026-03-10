@@ -4,7 +4,7 @@ using Godot;
 // PURPOSE: Global manager for handling fire propagation.
 // ATTACH TO: A persistent "GameManager" Node.
 // =================================================================================================
-public partial class FireManager : Godot.Node
+public partial class FireManager : Node
 {
 public static FireManager Instance { get; private set; }
 
@@ -27,16 +27,9 @@ public void StartNewFire(Vector3 position)
 {
     if (activeFire == null)
     {
-        var fireObj = FireControllerPrefab.Instantiate<GridNode>();
+        var fireObj = FireControllerPrefab.Instantiate<Godot.Node>();
         GetTree().CurrentScene.AddChild(fireObj); // Add to scene root
-        activeFire = fireObj as FireController ?? fireObj.GetNode<FireController>("FireController"); // Adjust path if script is on child
-        // Since FireController IS a script, if attached to root of prefab, fireObj is it.
-        // If prefab root is Node3D with script, cast works.
-        if (activeFire == null)
-        {
-            // Assuming the prefab has the script on the root
-            activeFire = (FireController)fireObj;
-        }
+        activeFire = fireObj as FireController ?? fireObj.GetNodeOrNull<FireController>("."); 
     }
     GridNode startNode = GridManager.Instance.NodeFromWorldPoint(position);
     activeFire.StartFireAt(startNode);

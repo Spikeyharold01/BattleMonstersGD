@@ -62,7 +62,7 @@ public partial class Effect_PhysicsWind : AbilityEffectComponent
                     {
                         int distance = Dice.Roll(2, 6) * 10;
                         int dmg = Dice.Roll(2, 6);
-                        ApplyPush(target, windDir, distance, context.Caster.GlobalPosition, maxSpellDistance);
+                        ApplyPush(target, windDir, distance, context.Caster, maxSpellDistance);
                         target.TakeDamage(dmg, "Bludgeoning", context.Caster);
                         GD.Print($"{target.Name} is blown away {distance}ft!");
                     }
@@ -73,7 +73,7 @@ public partial class Effect_PhysicsWind : AbilityEffectComponent
                     int distRoll = Dice.Roll(1, 4);
                     int distance = distRoll * 10;
                     int dmg = Dice.Roll(distRoll, 4); // 1d4 per 10ft
-                    ApplyPush(target, windDir, distance, context.Caster.GlobalPosition, maxSpellDistance);
+                    ApplyPush(target, windDir, distance, context.Caster, maxSpellDistance);
                     target.TakeNonlethalDamage(dmg);
                     ApplyProne(target, context.Caster);
                 }
@@ -86,8 +86,9 @@ public partial class Effect_PhysicsWind : AbilityEffectComponent
         }
     }
 
-    private void ApplyPush(CreatureStats target, Vector3 dir, float dist, Vector3 spellOrigin, float maxSpellDistance)
+  private void ApplyPush(CreatureStats target, Vector3 dir, float dist, CreatureStats caster, float maxSpellDistance)
     {
+        Vector3 spellOrigin = caster.GlobalPosition;
 		Vector3 desiredDestination = target.GlobalPosition + dir * dist;
 
         if (maxSpellDistance > 0f)

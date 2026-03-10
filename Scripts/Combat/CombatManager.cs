@@ -83,6 +83,16 @@ public static class CombatManager
         return CombatMagic.CheckConcentration(caster, dc);
     }
 
+    public static bool ResolveAbilityAttack(CreatureStats attacker, CreatureStats defender, Ability_SO ability)
+    {
+        return CombatMagic.ResolveAbilityAttack(attacker, defender, ability);
+    }
+
+    public static void ResolveIllusionDisbelief(IllusionController illusion, CreatureStats interactor)
+    {
+        CombatMagic.ResolveIllusionDisbelief(illusion, interactor);
+    }
+
     #endregion
 
     #region Maneuvers (Delegated to CombatManeuvers)
@@ -90,6 +100,16 @@ public static class CombatManager
     public static void ResolveTrip(CreatureStats attacker, CreatureStats defender)
     {
         CombatManeuvers.ResolveTrip(attacker, defender);
+    }
+
+    public static void ResolveBullRush(CreatureStats attacker, CreatureStats defender)
+    {
+        _ = CombatManeuvers.ResolveBullRushCoroutine(attacker, defender);
+    }
+
+    public static void ResolveAwesomeBlow(CreatureStats attacker, CreatureStats defender)
+    {
+        CombatManeuvers.ResolveAwesomeBlow(attacker, defender);
     }
     
  public static void ResolveGrapple(CreatureStats attacker, CreatureStats defender, bool isFreeAction = false, NaturalAttack initiatingAttack = null)

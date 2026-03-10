@@ -8,6 +8,10 @@ using System.Text.RegularExpressions;
 public static class ImportUtils 
 {
     // Helper to get value from Dictionary safely
+    public static string GetValue(Dictionary<string, string> data, string key)
+    {
+        return GetValue<string>(data, key, "");
+    }
     public static T GetValue<T>(Dictionary<string, string> data, string key, T defaultValue = default(T))
     {
         if (data.TryGetValue(key, out string value) && !string.IsNullOrEmpty(value))

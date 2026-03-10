@@ -28,7 +28,7 @@ public int DamageTakenAfterDecision;
 public bool DiedAfterDecision;
 }
 
-public partial class AIController : Godot.Node
+public partial class AIController : Node
 {
 // --- Cached Component References ---
 public CreatureStats MyStats { get; private set; }
@@ -400,7 +400,7 @@ private TurnPlan DecideBestTurnPlan(TurnPlan playerSuggestion = null)
 		var victim = MyStats.CurrentGrappleState.Target;
 		if (victim != null && victim.MyEffects.HasCondition(Condition.SoulBound))
 		{
-			myTactics.W_Defensive += 50f; 
+			Personality.W_Defensive += 50f; 
 			GD.Print($"{GetParent().Name} shifts to Bodyguard Mode (Soul Bound victim held). Defensive weight increased.");
 		}
 	}
@@ -502,8 +502,9 @@ var best = possiblePlans.First();
 			? BuildSupportReason(best)
 			: BuildSupportReason(best);
 
-		best.DecisionNarrative = AllyDecisionNarrativeGenerator.BuildNarrative(followsSuggestion, reasonA, reasonB);
-	}
+		// We pass 'this' as the controller and a dummy SuggestedAction since the original data is packed in the plan context here.
+		best.DecisionNarrative = AllyDecisionNarrativeGenerator.BuildNarrative(this, new SuggestedAction(), best, followsSuggestion);
+			}
 
 	return best;
 }
@@ -617,12 +618,12 @@ private float ScoreTurnPlan(TurnPlan plan, bool isPlayerSuggestionContext = fals
 	if (harmlessEffect != null && harmlessEffect.SourceCreature != null)
 	{
 		var harmlessSource = harmlessEffect.SourceCreature;
-		bool isAggressivePlan = plan.Actions.Any(action => 
+				bool isHarmlessTargetedPlan = plan.Actions.Any(action => 
 			action.GetTarget() == harmlessSource && 
 			(action is AIAction_Attack || action is AIAction_FullAttack || (action is AIAction_CastGenericAbility cast && cast.Score > 0))
 		);
 
-		if (isAggressivePlan)
+		if (isHarmlessTargetedPlan)
 		{
 			totalScore = -1f; 
 			plan.UpdateName(); 
@@ -839,7 +840,7 @@ private List<AIAction> GeneratePossibleSingleActions()
 	List<CreatureStats> visibleTargets = FindVisibleTargets();
 
 	var lights = GetTree().GetNodesInGroup("DancingLights");
-	foreach(GridNode n in lights)
+	foreach(Node n in lights)
 	{
 		if (n is PersistentEffect_DancingLights dl && dl.Caster == MyStats) 
 		{
@@ -1389,7 +1390,7 @@ private List<AIAction> GeneratePossibleSingleActions()
 		possibleActions.Add(new AIAction_Search(this));
 		
 		var autonomousEntities = GetTree().GetNodesInGroup("AutonomousEntities");
-		foreach (GridNode node in autonomousEntities)
+		foreach (Node node in autonomousEntities)
 		{
 			if (node is AutonomousEntityController entity && entity.Caster == MyStats)
 			{

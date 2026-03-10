@@ -7,7 +7,7 @@ using System.Collections.Generic;
 ///
 /// It decides which phase is active and handles clean switching.
 /// </summary>
-public partial class GamePhaseManager : Godot.Node
+public partial class GamePhaseManager : Node
 {
     /// <summary>
     /// Sent after phase changes from one type to another.
@@ -36,7 +36,7 @@ public partial class GamePhaseManager : Godot.Node
 
     // Internal roots used by this manager.
     private Node3D _phaseRoot;
-    private GridNode _creatureStorage;
+    private Node _creatureStorage;
 
     // Current phase and direct travel reference.
     private IGamePhase _activePhase;
@@ -58,8 +58,8 @@ public partial class GamePhaseManager : Godot.Node
             AddChild(_phaseRoot);
         }
 
-        _creatureStorage = GetNodeOrNull<GridNode>("CreatureStorage") ?? new Node { Name = "CreatureStorage" };
-        if (_creatureStorage.GetParent() == null)
+       _creatureStorage = GetNodeOrNull<Node>("CreatureStorage") ?? new Node { Name = "CreatureStorage" };
+	   if (_creatureStorage.GetParent() == null)
         {
             AddChild(_creatureStorage);
         }

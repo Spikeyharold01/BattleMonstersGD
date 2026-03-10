@@ -9,7 +9,7 @@ using System.Linq;
 // =================================================================================================
 public enum ScanType { Magic, Thoughts, Evil, Undead }
 
-public partial class ConcentrationEffect_Scanner : Godot.Node
+public partial class ConcentrationEffect_Scanner : Node
 {
     private CreatureStats caster;
     private float duration;
@@ -112,7 +112,9 @@ public partial class ConcentrationEffect_Scanner : Godot.Node
         if (p.W_Defensive >= 150) return BehaviorTag.Defensive;
         
         // 3. Check Logic
-        if (p.W_TargetLowHealth > 20) return BehaviorTag.Predatory;
+		var tactics = ai.GetTactics();
+        if (tactics != null && tactics.W_TargetLowHealth > 20) return BehaviorTag.Predatory;
+        
 
         return BehaviorTag.Balanced;
     }

@@ -45,7 +45,7 @@ public static class SoundSystem
         var tree = Engine.GetMainLoop() as SceneTree;
         if (tree == null) return false;
         var silenceAuras = tree.GetNodesInGroup("SilenceAuras");
-        foreach (GridNode n in silenceAuras)
+        foreach (Node n in silenceAuras)
         {
             if (n is SilenceAuraController aura && aura.IsPointInside(point)) return true;
         }
@@ -263,7 +263,7 @@ public static class SoundSystem
         activeEvents.RemoveAll(e => e.IsExpired || (e.SourceCreature != null && !GodotObject.IsInstanceValid(e.SourceCreature)));
     }
 
-    private static bool IsDeafened(CreatureStats listener)
+    public static bool IsDeafened(CreatureStats listener)
    {
         if (listener == null) return false;
         bool hasCondition = listener.MyEffects != null && listener.MyEffects.HasCondition(Condition.Deafened);

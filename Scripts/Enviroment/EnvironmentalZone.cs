@@ -59,7 +59,8 @@ public override void _Process(double delta)
         foreach(var dict in fires)
         {
             var fireNode = (Node3D)dict["collider"];
-            var burning = fireNode.GetNodeOrNull<BurningObjectController>("BurningObjectController") ?? fireNode as BurningObjectController;
+			 var burning = fireNode.GetNodeOrNull<BurningObjectController>("BurningObjectController");
+            
             
             if (burning != null)
             {

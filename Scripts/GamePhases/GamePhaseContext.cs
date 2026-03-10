@@ -5,7 +5,7 @@ using Godot;
 ///
 /// This avoids hard-wiring phases to one exact scene setup.
 /// </summary>
-public sealed class GamePhaseContext
+public partial class ArenaStartContext : RefCounted
 {
     /// <summary>
     /// Build a context object used during phase calls.
