@@ -122,7 +122,7 @@ public partial class GamePhaseManager : Node
         // TurnManager stays the sole authority for turn length.
         TurnManager.Instance?.SetGameMode(nextPhase);
 
-        EmitSignal(SignalName.PhaseChanged, previousType, nextPhase);
+        EmitSignal(SignalName.PhaseChanged, (int)previousType, (int)nextPhase);
         GD.Print($"Phase transition: {previousType} -> {nextPhase}");
     }
 
@@ -205,16 +205,16 @@ public partial class GamePhaseManager : Node
         });
     }
 
-    private void RegisterPhases()
+private void RegisterPhases()
     {
         Action arenaEnter = () =>
         {
-            if (ArenaEnterCallback.IsValid()) ArenaEnterCallback.Call();
+            if (!ArenaEnterCallback.Equals(default(Callable))) ArenaEnterCallback.Call();
         };
 
         Action arenaExit = () =>
         {
-            if (ArenaExitCallback.IsValid()) ArenaExitCallback.Call();
+            if (!ArenaExitCallback.Equals(default(Callable))) ArenaExitCallback.Call();
         };
 
         var arenaPhase = new ArenaPhaseAdapter(ArenaRoot, arenaEnter, arenaExit);

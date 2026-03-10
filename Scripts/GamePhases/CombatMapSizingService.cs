@@ -101,11 +101,13 @@ public static class CombatMapSizingService
             }
 
             // Highest movement option available to the creature in one 6-second turn.
-            float creatureSpeed = Mathf.Max(creature.Template.Speed_Land,
+            float creatureSpeed = new[] {
+                creature.Template.Speed_Land,
                 creature.Template.Speed_Fly,
                 creature.Template.Speed_Swim,
                 creature.Template.Speed_Burrow,
-                creature.Template.Speed_Climb);
+                creature.Template.Speed_Climb
+            }.Max();
             maxSpeedPerRound = Mathf.Max(maxSpeedPerRound, creatureSpeed);
 
             // Largest close-quarters engagement distance.

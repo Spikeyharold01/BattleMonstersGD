@@ -1,11 +1,11 @@
 using Godot;
 
-/// <summary>
+// <summary>
 /// Shared data passed into every phase method.
 ///
 /// This avoids hard-wiring phases to one exact scene setup.
 /// </summary>
-public partial class ArenaStartContext : RefCounted
+public sealed class GamePhaseContext
 {
     /// <summary>
     /// Build a context object used during phase calls.

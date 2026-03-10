@@ -56,7 +56,7 @@ public partial class IllusionManager : Node
             
             // Aabb.IntersectsSegment returns true/false and (optionally) the intersection point.
             // We verify intersection.
-            if (bounds.IntersectsSegment(start, end) != null) 
+            if (bounds.IntersectsSegment(start, end)) 
             {
                 // In Unity, we checked distance < Vector3.Distance(start, end).
                 // IntersectsSegment in Godot specifically checks the segment *between* start and end.

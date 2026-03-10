@@ -206,7 +206,7 @@ public partial class AoOManager : Node
             c != target &&                                    // Can't threaten self
             (c.IsInGroup("Player") != targetIsPlayer) &&      // Must be an enemy (opposite faction)
             !c.GetNode<StatusEffectController>("StatusEffectController").HasCondition(Condition.Helpless) && // Can't be helpless
-            c.GlobalPosition.DistanceTo(target.GlobalPosition) <= c.GetEffectiveReach().Max // Must be within reach
+            c.GlobalPosition.DistanceTo(target.GlobalPosition) <= c.GetMaxReach() // Must be within reach
         ).ToList();
     }
     

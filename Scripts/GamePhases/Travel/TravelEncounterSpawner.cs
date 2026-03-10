@@ -93,7 +93,7 @@ public sealed class TravelEncounterSpawner
     /// </summary>
     public bool HasAnyHostileEncounter()
     {
-        return _activeEncounters.Any(e => e != null && !e.IsDisengaged && e.Creatures != null && e.Creatures.Any(c => c != null && GodotObject.IsInstanceValid(c) && !c.IsDead));
+        return _activeEncounters.Any(e => e != null && !e.IsDisengaged && e.Members != null && e.Members.Any(c => c != null && GodotObject.IsInstanceValid(c) && !c.IsDead));
     }
 
     public void Update(double deltaSeconds)

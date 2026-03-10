@@ -476,17 +476,17 @@ public static class TravelPursuitSystem
         return targetIsPlayer ? 2.5f : 1f;
     }
 
-    private static void ApplyOffscreenAttrition(CreatureStats pursuer, CreatureStats target)
+private static void ApplyOffscreenAttrition(CreatureStats pursuer, CreatureStats target)
     {
         if (pursuer != null && GodotObject.IsInstanceValid(pursuer))
         {
-            int pursuerLoss = Mathf.Max(1, Mathf.RoundToInt(Mathf.Max(1, pursuer.MaxHP) * 0.03f));
+            int pursuerLoss = Mathf.Max(1, Mathf.RoundToInt(Mathf.Max(1, pursuer.GetEffectiveMaxHP()) * 0.03f));
             pursuer.TakeDamage(pursuerLoss, "OffscreenPursuit");
         }
 
         if (target != null && GodotObject.IsInstanceValid(target))
         {
-            int targetLoss = Mathf.Max(1, Mathf.RoundToInt(Mathf.Max(1, target.MaxHP) * 0.12f));
+            int targetLoss = Mathf.Max(1, Mathf.RoundToInt(Mathf.Max(1, target.GetEffectiveMaxHP()) * 0.12f));
             target.TakeDamage(targetLoss, "OffscreenPursuit");
         }
     }

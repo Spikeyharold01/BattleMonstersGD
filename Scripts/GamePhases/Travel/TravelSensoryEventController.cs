@@ -456,8 +456,8 @@ public sealed class TravelSensoryEventController
             return;
         }
 
-        (TravelActiveEncounter encounter, CreatureStats source) = eligibleSources[_rng.RandiRange(0, eligibleSources.Count - 1)];
-        TravelSensoryStimulus stimulus = BuildMimicStimulus(encounter, source);
+        (TravelActiveEncounter selectedEncounter, CreatureStats source) = eligibleSources[_rng.RandiRange(0, eligibleSources.Count - 1)];
+        TravelSensoryStimulus stimulus = BuildMimicStimulus(selectedEncounter, source);
         if (stimulus == null)
         {
             return;
@@ -539,8 +539,10 @@ public sealed class TravelSensoryEventController
             CooldownSeconds = selectedComponent.CooldownSeconds
         };
 
-        RecordLureStimulus(encounter, stimulus);
+        encounter.LastLureStimulusAtSeconds = _worldClockSeconds;
+        encounter.LastLureStimulusPosition = stimulus.Position;
         return stimulus;
+    
     }
 
     /// <summary>
@@ -834,6 +836,80 @@ public sealed class TravelSensoryEventController
         }
 
         return _runtime?.PlayerSpawnPoint ?? Vector3.Zero;
+    }
+private float ResolveAdjustedAmbushChance()
+    {
+        return _config.AmbushChanceWhenAware;
+    }
+
+    private bool IsPredatorDetectedFirst(TravelActiveEncounter encounter, Vector3 partyCenter)
+    {
+        if (encounter == null || encounter.Members == null) return false;
+        foreach (var member in encounter.Members)
+        {
+            if (member != null && GodotObject.IsInstanceValid(member) && !member.IsDead)
+            {
+                if (member.GlobalPosition.DistanceTo(partyCenter) < _config.PartyPredatorDetectionRange) return true;
+            }
+        }
+        return false;
+    }
+
+    private bool IsLineOfSightBlockedForAmbush(TravelActiveEncounter encounter, Vector3 partyCenter)
+    {
+        if (encounter == null || encounter.Members == null) return true;
+        foreach (var member in encounter.Members)
+        {
+            if (member != null && GodotObject.IsInstanceValid(member) && !member.IsDead)
+            {
+                if (ResolveAmbushLineOfSightStub(member.GlobalPosition, partyCenter)) return false;
+            }
+        }
+        return true;
+    }
+
+    private bool ResolveAmbushLineOfSightStub(Vector3 source, Vector3 target)
+    {
+        if (GridManager.Instance == null) return true;
+        var spaceState = GridManager.Instance.GetWorld3D().DirectSpaceState;
+        var query = PhysicsRayQueryParameters3D.Create(source + Vector3.Up * 1.5f, target + Vector3.Up * 1.5f);
+        query.CollisionMask = 1;
+        var result = spaceState.IntersectRay(query);
+        return result.Count == 0;
+    }
+
+    private TravelSensoryStimulus CreateAuthenticVisionStimulus(Vector3 center)
+    {
+        return new TravelSensoryStimulus
+        {
+            StimulusId = Guid.NewGuid().ToString("N"),
+            SourceKind = TravelSensorySourceKind.AuthenticBiome,
+            Channel = TravelSensoryChannel.Vision,
+            EventType = TravelSensoryEventType.WanderingBeast,
+            Description = BuildAuthenticDescription(TravelSensoryEventType.WanderingBeast),
+            Position = center,
+            CreatedAtSeconds = _worldClockSeconds,
+            ExpiresAtSeconds = _worldClockSeconds + 15d,
+            IsAuthentic = true,
+            SupportsOptionalInvestigation = true
+        };
+    }
+
+    private TravelSensoryStimulus CreateAuthenticSoundStimulus(Vector3 center)
+    {
+        return new TravelSensoryStimulus
+        {
+            StimulusId = Guid.NewGuid().ToString("N"),
+            SourceKind = TravelSensorySourceKind.AuthenticBiome,
+            Channel = TravelSensoryChannel.Sound,
+            EventType = TravelSensoryEventType.DistantRoar,
+            Description = BuildAuthenticDescription(TravelSensoryEventType.DistantRoar),
+            Position = center,
+            CreatedAtSeconds = _worldClockSeconds,
+            ExpiresAtSeconds = _worldClockSeconds + 15d,
+            IsAuthentic = true,
+            SupportsOptionalInvestigation = true
+        };
     }
 
     private static string BuildAuthenticDescription(TravelSensoryEventType type)
