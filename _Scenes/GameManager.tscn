@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://du1vhd8v6tstx"]
+
+[ext_resource type="Script" uid="uid://7usglr7j3oqs" path="res://Scripts/Managers/AoOManager.cs" id="1_it0l5"]
+
+[node name="GameManager" type="Node3D" unique_id=708562296]
+script = ExtResource("1_it0l5")
