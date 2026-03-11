@@ -34,8 +34,8 @@ public static class TravelScaleDefinitions
     public const int TacticalTurnSeconds = 60;
     public const int CombatTurnSeconds = 6;
 
-    public const float CombatSquareFeet = 6f;
-    public const float TacticalSquareFeet = 60f;
+    public const float CombatSquareFeet = 5f;
+    public const float TacticalSquareFeet = 50f;
     public const float StrategicTileFeet = 12000f;
 
     // Tactical projection is intentionally fixed so travel-to-combat transitions stay deterministic.
