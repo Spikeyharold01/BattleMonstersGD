@@ -1,6 +1,48 @@
 [gd_scene format=3 uid="uid://du1vhd8v6tstx"]
 
 [ext_resource type="Script" uid="uid://7usglr7j3oqs" path="res://Scripts/Managers/AoOManager.cs" id="1_it0l5"]
+[ext_resource type="Script" uid="uid://cu4dljt3cah2f" path="res://Scripts/Managers/GridManager.cs" id="1_x3ljj"]
+[ext_resource type="Script" uid="uid://p1qesanagv4i" path="res://Scripts/Managers/TurnManager.cs" id="3_505dp"]
+[ext_resource type="Script" uid="uid://sfswbg5cxenf" path="res://Scripts/Managers/EffectManager.cs" id="4_a1y48"]
+[ext_resource type="Script" uid="uid://dwdh4cojh3prg" path="res://Scripts/Managers/IllusionManager.cs" id="5_hbeuu"]
+[ext_resource type="Script" uid="uid://dlxxn854mk47n" path="res://Scripts/Managers/LineOfSightManager.cs" id="6_ylgt0"]
+[ext_resource type="Script" uid="uid://d2rk73c7ig3l8" path="res://Scripts/Managers/Pathfinding.cs" id="7_iwb5n"]
+[ext_resource type="Script" uid="uid://ufj4u35abjnb" path="res://Scripts/Managers/ReadyActionManager.cs" id="8_4tf01"]
+[ext_resource type="Script" uid="uid://bkp0csi4t53a0" path="res://Scripts/Managers/RollManager.cs" id="9_llit0"]
+[ext_resource type="Script" uid="uid://c2oylspv75q40" path="res://Scripts/Managers/TimeManager.cs" id="11_m1gw5"]
+[ext_resource type="Script" uid="uid://bjdj8nib6d40v" path="res://Scripts/Managers/VisibilityManager.cs" id="12_6475n"]
 
 [node name="GameManager" type="Node3D" unique_id=708562296]
+
+[node name="GridManager" type="Node3D" parent="." unique_id=1667567720]
+script = ExtResource("1_x3ljj")
+
+[node name="AoOManager" type="Node" parent="." unique_id=759445588]
 script = ExtResource("1_it0l5")
+
+[node name="TurnManager" type="Node" parent="." unique_id=1435098809]
+script = ExtResource("3_505dp")
+
+[node name="EffectManager" type="Node" parent="." unique_id=1224215157]
+script = ExtResource("4_a1y48")
+
+[node name="IllusionManager" type="Node" parent="." unique_id=1114165700]
+script = ExtResource("5_hbeuu")
+
+[node name="LineOfSightManager" type="Node" parent="." unique_id=972705653]
+script = ExtResource("6_ylgt0")
+
+[node name="Pathfinding" type="Node" parent="." unique_id=1506295632]
+script = ExtResource("7_iwb5n")
+
+[node name="ReadyActionManager" type="Node" parent="." unique_id=716224113]
+script = ExtResource("8_4tf01")
+
+[node name="RollManager" type="Node" parent="." unique_id=1927786400]
+script = ExtResource("9_llit0")
+
+[node name="TimeManager" type="Node" parent="." unique_id=1443056322]
+script = ExtResource("11_m1gw5")
+
+[node name="VisibilityManager" type="Node" parent="." unique_id=318713821]
+script = ExtResource("12_6475n")
