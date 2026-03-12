@@ -16,6 +16,14 @@ public struct VisibilityResult
 
 public enum VisibilityState { Hidden, Outlined, Visible, VisibleWithCover }
 
+public struct TerrainCoverDebugInfo
+{
+    public int CoverBonusToAC;
+    public int CoverHits;
+    public int SampleSteps;
+    public float CoverPercentage;
+}
+
 public static class LineOfSightManager
 {
     public const float SCENT_MULTIPLIER_UPWIND = 2.0f;
@@ -205,8 +213,28 @@ public static class LineOfSightManager
     /// </summary>
     private static int CalculateTerrainCoverBonus(Vector3 start, Vector3 end, float targetEyeY)
     {
+        return EvaluateTerrainCover(start, end, targetEyeY, out _, out _);
+    }
+
+    /// <summary>
+    /// Debug-facing terrain cover sample details reused by visualization tools.
+    /// </summary>
+    public static TerrainCoverDebugInfo GetTerrainCoverDebugInfo(Vector3 start, Vector3 end, float targetEyeY)
+    {
+        TerrainCoverDebugInfo info = new TerrainCoverDebugInfo();
+        info.CoverBonusToAC = EvaluateTerrainCover(start, end, targetEyeY, out int coverHits, out int sampleSteps);
+        info.CoverHits = coverHits;
+        info.SampleSteps = sampleSteps;
+        info.CoverPercentage = sampleSteps > 0 ? (coverHits / (float)sampleSteps) * 100f : 0f;
+        return info;
+    }
+
+    private static int EvaluateTerrainCover(Vector3 start, Vector3 end, float targetEyeY, out int coverHits, out int sampleSteps)
+    {
         if (GridManager.Instance == null)
         {
+            coverHits = 0;
+            sampleSteps = 0;
             return 0;
         }
 
@@ -214,7 +242,8 @@ public static class LineOfSightManager
         float step = Mathf.Max(GridManager.Instance.nodeDiameter * 0.5f, 0.25f);
         int steps = Mathf.Clamp(Mathf.CeilToInt(distance / step), 1, 96);
 
-        int coverHits = 0;
+        coverHits = 0;
+        sampleSteps = Mathf.Max(steps - 1, 0);
         for (int i = 1; i < steps; i++)
         {
             float t = i / (float)steps;
