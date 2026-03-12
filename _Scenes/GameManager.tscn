@@ -11,6 +11,7 @@
 [ext_resource type="Script" uid="uid://bkp0csi4t53a0" path="res://Scripts/Managers/RollManager.cs" id="9_llit0"]
 [ext_resource type="Script" uid="uid://c2oylspv75q40" path="res://Scripts/Managers/TimeManager.cs" id="11_m1gw5"]
 [ext_resource type="Script" uid="uid://bjdj8nib6d40v" path="res://Scripts/Managers/VisibilityManager.cs" id="12_6475n"]
+[ext_resource type="Script" uid="uid://bo8eekth52d1q" path="res://Scripts/Managers/LosDebugVisualizationManager.cs" id="12_x3ljj"]
 
 [node name="GameManager" type="Node3D" unique_id=708562296]
 
@@ -46,3 +47,6 @@ script = ExtResource("11_m1gw5")
 
 [node name="VisibilityManager" type="Node" parent="." unique_id=318713821]
 script = ExtResource("12_6475n")
+
+[node name="LosDebugVisualizationManager" type="Node" parent="." unique_id=1907829918]
+script = ExtResource("12_x3ljj")
