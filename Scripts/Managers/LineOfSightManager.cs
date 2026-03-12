@@ -190,7 +190,59 @@ public static class LineOfSightManager
             }
         }
 
+        result.CoverBonusToAC = CalculateTerrainCoverBonus(start, end, target.GlobalPosition.Y + 1.0f);
+        if (result.CoverBonusToAC > 0 && string.IsNullOrEmpty(result.Reason))
+        {
+            result.Reason = "Terrain Cover";
+        }
+
         return result;
+    }
+
+    /// <summary>
+    /// Lightweight node-based cover evaluator that reuses GridManager cover metadata.
+    /// It intentionally does not replace raycast LoE logic; it only scores partial cover bonuses.
+    /// </summary>
+    private static int CalculateTerrainCoverBonus(Vector3 start, Vector3 end, float targetEyeY)
+    {
+        if (GridManager.Instance == null)
+        {
+            return 0;
+        }
+
+        float distance = start.DistanceTo(end);
+        float step = Mathf.Max(GridManager.Instance.nodeDiameter * 0.5f, 0.25f);
+        int steps = Mathf.Clamp(Mathf.CeilToInt(distance / step), 1, 96);
+
+        int coverHits = 0;
+        for (int i = 1; i < steps; i++)
+        {
+            float t = i / (float)steps;
+            Vector3 sample = start.Lerp(end, t);
+            GridNode node = GridManager.Instance.NodeFromWorldPoint(sample);
+            if (node == null || !node.providesCover)
+            {
+                continue;
+            }
+
+            float relativeHeight = sample.Y + Mathf.Max(0f, node.coverHeight);
+            if (relativeHeight + 0.05f >= targetEyeY)
+            {
+                coverHits++;
+            }
+        }
+
+        if (coverHits >= Mathf.Max(2, steps / 3))
+        {
+            return 4;
+        }
+
+        if (coverHits > 0)
+        {
+            return 2;
+        }
+
+        return 0;
     }
 	 // NEW: Generic visibility helper for points on the map instead of specific creatures
     public static VisibilityResult GetVisibilityFromPoint(Node3D context, Vector3 viewerPosition, Vector3 targetPosition)

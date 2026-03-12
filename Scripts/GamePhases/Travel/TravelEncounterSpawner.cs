@@ -668,8 +668,8 @@ public sealed class TravelActiveEncounter
             awarenessDelta *= Mathf.Clamp(1f + escalationModifier, 0.35f, 1.8f);
         }
 
-        // LOS is intentionally lightweight for travel; this keeps a hook for future fidelity.
-        HasLineOfSightToParty = ResolveLineOfSightStub(distance, config);
+        // LOS remains lightweight for travel but now traverses tiles instead of pure distance-only checks.
+        HasLineOfSightToParty = ResolveLineOfSightStub(SpawnCenter, partyCenter, distance, config);
         if (!HasLineOfSightToParty)
         {
             awarenessDelta *= config.OutOfSightAwarenessMultiplier;
@@ -801,9 +801,55 @@ public sealed class TravelActiveEncounter
         return distanceToParty < config.AmbushRange;
     }
 
-    private static bool ResolveLineOfSightStub(float distance, TravelSensoryConfig config)
+    private static bool ResolveLineOfSightStub(Vector3 observerPosition, Vector3 targetPosition, float distance, TravelSensoryConfig config)
     {
-        return distance <= config.StubLineOfSightRange;
+        if (distance > config.StubLineOfSightRange)
+        {
+            return false;
+        }
+
+        if (GridManager.Instance == null)
+        {
+            return true;
+        }
+
+        return HasTileTraversalLineOfSight(observerPosition, targetPosition);
+    }
+
+    /// <summary>
+    /// Lightweight tile traversal helper for travel awareness LoS.
+    /// This intentionally avoids raycasting and uses existing grid node metadata.
+    /// </summary>
+    private static bool HasTileTraversalLineOfSight(Vector3 observerPosition, Vector3 targetPosition)
+    {
+        float distance = observerPosition.DistanceTo(targetPosition);
+        float step = Mathf.Max(GridManager.Instance.nodeDiameter, 1f);
+        int steps = Mathf.Clamp(Mathf.CeilToInt(distance / step), 1, 96);
+
+        int denseCoverCount = 0;
+        for (int i = 1; i < steps; i++)
+        {
+            float t = i / (float)steps;
+            Vector3 sample = observerPosition.Lerp(targetPosition, t);
+            GridNode node = GridManager.Instance.NodeFromWorldPoint(sample);
+            if (node == null)
+            {
+                continue;
+            }
+
+            if (node.blocksLos || node.terrainType == TerrainType.Solid)
+            {
+                return false;
+            }
+
+            if (node.providesCover || node.environmentalTags.Contains("Fog") || node.environmentalTags.Contains("Smoke"))
+            {
+                denseCoverCount++;
+            }
+        }
+
+        // If most sampled tiles are heavy concealment/cover, treat LoS as lost for travel-level awareness.
+        return denseCoverCount < Mathf.Max(2, steps / 2);
     }
 
 
