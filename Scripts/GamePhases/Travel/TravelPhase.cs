@@ -220,6 +220,9 @@ public sealed class TravelPhase : IGamePhase
                     strategicEscalation = strategicResult.EncounterTriggered || strategicResult.HuntedEscalationTriggered;
                     if (strategicEscalation)
                     {
+                        // Tell the spawner to generate the specific AI entities that caught us!
+                        _encounterSpawner.SpawnFromStrategicEntities(strategicResult.EngagingEntities);
+
                         turnManager.RegisterTravelResolutionEvent(TravelResolutionEvent.PerceptionEvent);
                         turnManager.RegisterTravelResolutionEvent(TravelResolutionEvent.HostileProximityThresholdCrossed);
                     }

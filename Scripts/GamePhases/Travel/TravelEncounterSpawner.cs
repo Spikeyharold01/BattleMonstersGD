@@ -98,15 +98,8 @@ public sealed class TravelEncounterSpawner
 
     public void Update(double deltaSeconds)
     {
-        if (_snapshot == null || _runtime == null || _context == null)
-        {
-            return;
-        }
-
-        Vector3 playerPosition = ResolvePlayerPosition();
-
-        ProcessTriggerBasedSpawns(playerPosition);
-        ProcessDensityBasedSpawns(deltaSeconds, playerPosition);
+        // Random proximity and density spawning has been entirely removed.
+        // The Spawner now ONLY reacts when instructed by the StrategicEncounterResolver.
     }
 
     /// <summary>
@@ -560,6 +553,56 @@ public sealed class TravelEncounterSpawner
         float angle = index * 0.9f;
         float radius = 1.4f + (index * 0.25f);
         return new Vector3(Mathf.Cos(angle) * radius, 0f, Mathf.Sin(angle) * radius);
+    }
+
+    /// <summary>
+    /// Spawns the physical 3D representations of Strategic AI entities that caught the player.
+    /// </summary>
+    public void SpawnFromStrategicEntities(List<StrategicEntity> entities)
+    {
+        if (entities == null || entities.Count == 0 || _zonePlans.Count == 0) return;
+
+        // Pick a random tactical zone near the player to spawn them into
+        TravelEncounterZonePlan targetZone = _zonePlans[_rng.RandiRange(0, _zonePlans.Count - 1)];
+        TravelEncounterArchetypeDefinition archetype = ChooseArchetype(targetZone.IsAmbushCapable);
+        
+        var members = new List<CreatureStats>();
+        int index = 0;
+
+        foreach(var strategicEntity in entities)
+        {
+            if (strategicEntity.CreatureDefinition == null) continue;
+
+            // Generate a group based on the biome settings, but forced to use the AI's exact template
+            int groupSize = RollGroupSize();
+            for (int i = 0; i < groupSize; i++)
+            {
+                CreatureStats spawned = SpawnOneCreature(strategicEntity.CreatureDefinition, targetZone.ZoneCenter, index, archetype);
+                if (spawned != null) members.Add(spawned);
+                index++;
+            }
+        }
+
+        if (members.Count == 0) return;
+
+        var encounter = new TravelActiveEncounter
+        {
+            EncounterId = Guid.NewGuid().ToString("N"),
+            ZoneIndex = targetZone.ZoneIndex,
+            SpawnCenter = targetZone.ZoneCenter,
+            Archetype = archetype,
+            Members = members,
+            IsAmbushEncounter = targetZone.IsAmbushCapable,
+            IsDensityDriven = false, // It's ecologically driven now!
+            IsDisengaged = false,
+            MoraleRetreatThreshold = Mathf.Clamp(archetype?.MoraleRetreatThreshold ?? 0.3f, 0f, 1f),
+            GroupMoraleProfile = archetype?.MoraleProfileOverride,
+            SpawnTimestampSeconds = Time.GetTicksMsec() / 1000d
+        };
+
+        _activeEncounters.Add(encounter);
+        targetZone.Spawned = true;
+        EncounterSpawned?.Invoke(encounter);
     }
 }
 

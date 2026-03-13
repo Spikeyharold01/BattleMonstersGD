@@ -8,6 +8,7 @@ public sealed class StrategicResolutionResult
     public bool EncounterTriggered;
     public bool HuntedEscalationTriggered;
     public int AiInteractionCount;
+	public List<StrategicEntity> EngagingEntities = new List<StrategicEntity>();
 }
 
 /// <summary>
@@ -150,9 +151,12 @@ public sealed class StrategicEncounterResolver
         result.AiInteractionCount = ResolveAiVsAiInteractions();
 
         StrategicDisposition contactDisposition;
-        bool detected = EvaluatePlayerTileInteraction(party, out contactDisposition);
+        List<StrategicEntity> attackers;
+        bool detected = EvaluatePlayerTileInteraction(party, out contactDisposition, out attackers);
+        
         result.EncounterTriggered = detected && (contactDisposition == StrategicDisposition.Hostile || contactDisposition == StrategicDisposition.Animal);
         result.HuntedEscalationTriggered = detected && contactDisposition == StrategicDisposition.Hostile;
+        if (result.EncounterTriggered) result.EngagingEntities = attackers;
 
         return result;
     }
@@ -252,18 +256,36 @@ public sealed class StrategicEncounterResolver
         RelocateEntity(entity, target, tileSteps);
     }
 
-    private Vector2I ChooseIntentTile(StrategicEntity entity)
+     private Vector2I ChooseIntentTile(StrategicEntity entity)
     {
         Vector2I playerTile = _runtime.StrategicMap.PlayerTileCoord;
         bool hungry = entity.Hunger >= 0.55f;
 
-        StrategicDisposition disposition = ResolveDisposition(entity.CreatureDefinition, _context?.CreaturePersistence?.PersistentCreatures?.FirstOrDefault(c => c != null && c.IsInGroup("Player"))?.Template);
-        bool aggressive = disposition == StrategicDisposition.Hostile || disposition == StrategicDisposition.Animal;
-
         Vector2I direction = Vector2I.Zero;
-        if (hungry && aggressive)
+        if (hungry)
         {
-            direction = new Vector2I(Math.Sign(playerTile.X - entity.TileCoord.X), Math.Sign(playerTile.Y - entity.TileCoord.Y));
+            // Predators hunt by moving toward nearby Disturbance (activity/tracks/noise)
+            Vector2I bestTile = entity.TileCoord;
+            float highestDisturbance = -1f;
+            for (int x = -2; x <= 2; x++)
+            {
+                for (int y = -2; y <= 2; y++)
+                {
+                    int checkX = Mathf.Clamp(entity.TileCoord.X + x, 0, _runtime.StrategicMap.Width - 1);
+                    int checkY = Mathf.Clamp(entity.TileCoord.Y + y, 0, _runtime.StrategicMap.Height - 1);
+                    float dist = _runtime.StrategicMap.Tiles[checkX, checkY].Disturbance;
+                    if (dist > highestDisturbance)
+                    {
+                        highestDisturbance = dist;
+                        bestTile = new Vector2I(checkX, checkY);
+                    }
+                }
+            }
+            if (bestTile != entity.TileCoord && highestDisturbance > 0.1f)
+            {
+                direction = new Vector2I(Math.Sign(bestTile.X - entity.TileCoord.X), Math.Sign(bestTile.Y - entity.TileCoord.Y));
+            }
+            else direction = new Vector2I(_rng.RandiRange(-1, 1), _rng.RandiRange(-1, 1));
         }
         else if (entity.HasHomeTile)
         {
@@ -362,9 +384,10 @@ public sealed class StrategicEncounterResolver
         return interactions;
     }
 
-    private bool EvaluatePlayerTileInteraction(StrategicEntity party, out StrategicDisposition dominantDisposition)
+    private bool EvaluatePlayerTileInteraction(StrategicEntity party, out StrategicDisposition dominantDisposition, out List<StrategicEntity> engagingEntities)
     {
         dominantDisposition = StrategicDisposition.Friendly;
+        engagingEntities = new List<StrategicEntity>();
 
         if (!_runtime.StrategicMap.TryGetTile(party.TileCoord, out StrategicMapTileData tile))
         {
@@ -401,6 +424,7 @@ public sealed class StrategicEncounterResolver
             if (disposition == StrategicDisposition.Hostile || disposition == StrategicDisposition.Animal)
             {
                 dominantDisposition = disposition;
+                engagingEntities.Add(entity); // Capture the attacker
                 return true;
             }
 
