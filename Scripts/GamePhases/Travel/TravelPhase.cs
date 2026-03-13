@@ -113,24 +113,15 @@ public sealed class TravelPhase : IGamePhase
 
         _runtime.ExitZone.PlayerReachedExit += OnPlayerReachedExit;
 
-        int allyIndex = 0;
+
         List<Vector3> allySpawns = _runtime.AllySpawnPoints;
 
         context.CreaturePersistence.SpawnCreatures(
             context.PhaseRoot,
-            c => c.IsInGroup("Player"),
+            c => c.IsInGroup("Player"), // ONLY spawn the main player token
             _ => _runtime.PlayerSpawnPoint);
 
-        context.CreaturePersistence.SpawnCreatures(
-            context.PhaseRoot,
-            c => c.IsInGroup("Ally") && !c.IsInGroup("Player"),
-            _ =>
-            {
-                if (allySpawns.Count == 0) return _runtime.PlayerSpawnPoint + new Vector3(2f, 0f, 0f);
-                int idx = allyIndex % allySpawns.Count;
-                allyIndex++;
-                return allySpawns[idx];
-            });
+        // (The massive block of Ally spawning code has been deleted. Allies stay safely hidden in storage until combat!)
 
         // Initialize travel-only encounter orchestration after map and party placement are ready.
         _encounterSpawner.Initialize(_snapshot, _runtime, context);

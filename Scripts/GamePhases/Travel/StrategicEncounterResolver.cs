@@ -221,10 +221,15 @@ public sealed class StrategicEncounterResolver
         }
 
         float weatherExhaustion = Mathf.Max(0f, WeatherManager.Instance?.CurrentWeather?.FlyPenalty ?? 0) * 0.01f;
-        entity.Hunger = Mathf.Clamp(entity.Hunger + 0.04f + weatherExhaustion, 0f, 1f);
+        
+        // Larger tribes gather/ration more efficiently. Individuals starve faster.
+        float groupSizeDivisor = Mathf.Max(1f, Mathf.Sqrt(entity.GroupSize)); 
+        float hungerTick = (0.04f + weatherExhaustion) / groupSizeDivisor;
+
+        entity.Hunger = Mathf.Clamp(entity.Hunger + hungerTick, 0f, 1f);
 
         // Injury naturally drifts upward for starving creatures and slowly eases for stable creatures.
-        if (entity.Hunger > 0.8f)
+        if (entity.Hunger > 0.85f)
         {
             entity.InjuryState = Mathf.Clamp(entity.InjuryState + 0.04f, 0f, 1f);
         }
@@ -289,7 +294,10 @@ public sealed class StrategicEncounterResolver
         }
         else if (entity.HasHomeTile)
         {
-            direction = new Vector2I(Math.Sign(entity.HomeTile.X - entity.TileCoord.X), Math.Sign(entity.HomeTile.Y - entity.TileCoord.Y));
+            // If they have a home and aren't hungry, they move towards it. 
+            // If they are ALREADY on it, they stay perfectly still (Direction = Zero).
+            if (entity.TileCoord == entity.HomeTile) direction = Vector2I.Zero;
+            else direction = new Vector2I(Math.Sign(entity.HomeTile.X - entity.TileCoord.X), Math.Sign(entity.HomeTile.Y - entity.TileCoord.Y));
         }
         else
         {
@@ -352,30 +360,100 @@ public sealed class StrategicEncounterResolver
                     {
                         StrategicEntity a = locals[i];
                         StrategicEntity b = locals[j];
-                        if (a.CreatureDefinition == null || b.CreatureDefinition == null)
+                        if (a.CreatureDefinition == null || b.CreatureDefinition == null || a.InjuryState >= 1f || b.InjuryState >= 1f)
                         {
                             continue;
+                        }
+
+                        bool isSameSpecies = a.CreatureDefinition == b.CreatureDefinition;
+                        bool isSolitary = a.CreatureDefinition.AverageGroupSize <= 1; // Strict solitary rule
+                        bool aIsStarving = a.Hunger >= 0.85f;
+                        bool bIsStarving = b.Hunger >= 0.85f;
+
+                        bool isIntelligent = a.CreatureDefinition.Intelligence > 6;
+                        bool isEvilOrChaotic = a.CreatureDefinition.Alignment.Contains("Evil") || a.CreatureDefinition.Alignment.Contains("Chaos");
+
+                        // --- ECOLOGICAL MATRIX ---
+                        if (isSameSpecies && !isSolitary)
+                        {
+                            bool willMerge = false;
+                            bool willCannibalize = false;
+
+                            if (isIntelligent)
+                            {
+                                if (isEvilOrChaotic)
+                                {
+                                    if (aIsStarving || bIsStarving)
+                                    {
+                                        // Evil/Chaotic starving tribes might cannibalize or merge out of desperation
+                                        if (_rng.Randf() > 0.5f) willCannibalize = true;
+                                        else willMerge = true;
+                                    }
+                                    else willMerge = true;
+                                }
+                                else { willMerge = true; } // Good/Neutral intelligent creatures always merge
+                            }
+                            else // Low IQ (< 6)
+                            {
+                                // Animals ignore each other unless starving and predatory
+                                if ((aIsStarving || bIsStarving) && isEvilOrChaotic) willCannibalize = true;
+                            }
+
+                            if (willMerge)
+                            {
+                                // Weighted average lowers hunger based on group sizes pooling resources
+                                a.Hunger = ((a.Hunger * a.GroupSize) + (b.Hunger * b.GroupSize)) / (a.GroupSize + b.GroupSize);
+                                a.GroupSize += b.GroupSize;
+                                b.InjuryState = 1.0f; // Mark B for cleanup
+                                GD.Print($"[color=gray][Ecology] Tribes of {a.CreatureDefinition.CreatureName} merged. Size: {a.GroupSize}.[/color]");
+                                continue;
+                            }
+                            
+                            if (!willCannibalize) continue; // They ignore each other
+                        }
+                        else if (isSameSpecies && isSolitary)
+                        {
+                            // Solitary creatures NEVER merge. If starving and predatory, they fight.
+                            if (!((aIsStarving || bIsStarving) && isEvilOrChaotic)) continue; 
                         }
 
                         StrategicDisposition aVsB = ResolveDisposition(a.CreatureDefinition, b.CreatureDefinition);
-                        if (aVsB == StrategicDisposition.Friendly)
+                        
+                        // CANNIBALISM: Starving creatures ignore "Friendly" disposition if it's food
+                        if (aVsB == StrategicDisposition.Friendly && !aIsStarving && !bIsStarving)
                         {
                             continue;
                         }
 
-                        float abilityPressure = ComputeStrategicAbilityModifier(a, b) - ComputeStrategicAbilityModifier(b, a);
-                        float combatWeight = 0.2f + (Mathf.Abs(abilityPressure) * 0.05f) + tile.Disturbance * 0.1f;
-                        if (_rng.Randf() > Mathf.Clamp(combatWeight, 0.05f, 0.75f))
-                        {
-                            continue;
-                        }
+                        // GROUP MATH: Multiply base power by the number of individuals in the tribe
+                        float powerA = (1f + ComputeStrategicAbilityModifier(a, b)) * a.GroupSize;
+                        float powerB = (1f + ComputeStrategicAbilityModifier(b, a)) * b.GroupSize;
+                        
+                        float powerDiff = powerA - powerB;
+                        float combatWeight = 0.2f + (Mathf.Abs(powerDiff) * 0.02f) + tile.Disturbance * 0.1f;
+                        
+                        if (_rng.Randf() > Mathf.Clamp(combatWeight, 0.05f, 0.75f)) continue; // They avoid each other
 
                         interactions++;
-                        StrategicEntity loser = abilityPressure >= 0f ? b : a;
-                        loser.InjuryState = Mathf.Clamp(loser.InjuryState + _rng.RandfRange(0.1f, 0.35f), 0f, 1f);
-                        tile.Disturbance = Mathf.Clamp(tile.Disturbance + 0.15f, 0f, 3f);
+                        StrategicEntity winner = powerDiff >= 0f ? a : b;
+                        StrategicEntity loser = powerDiff >= 0f ? b : a;
+                        
+                        // Loser tribe takes casualties (reduced group size) or injuries
+                        int casualties = Mathf.CeilToInt(loser.GroupSize * _rng.RandfRange(0.2f, 0.6f));
+                        loser.GroupSize -= casualties;
+                        if (loser.GroupSize <= 0) loser.InjuryState = 1.0f; // Tribe wiped out
+                        
+                        // Winner feeds and resets hunger
+                        winner.Hunger = 0f;
+                        tile.Disturbance = Mathf.Clamp(tile.Disturbance + 0.3f, 0f, 3f);
+                        
+                        string act = (isSameSpecies && (aIsStarving || bIsStarving)) ? "cannibalized" : "clashed with";
+                        GD.Print($"[color=gray][Ecology] A group of {winner.GroupSize} {winner.CreatureDefinition.CreatureName}s {act} a group of {loser.CreatureDefinition.CreatureName}s![/color]");
                     }
                 }
+                
+                // Cleanup wiped out tribes
+                tile.StrategicEntities.RemoveAll(e => e.InjuryState >= 1.0f);
 
                 tile.Disturbance = Mathf.Max(0f, tile.Disturbance - 0.02f);
             }
@@ -533,6 +611,18 @@ public sealed class StrategicEncounterResolver
         }
 
         float weatherAbilityPenalty = Mathf.Abs(Mathf.Min(0f, WeatherManager.Instance?.CurrentWeather?.RangedAttackPenalty ?? 0f)) * 0.01f;
-        return Mathf.Max(-1f, total - weatherAbilityPenalty);
+        float baseModifier = Mathf.Max(-1f, total - weatherAbilityPenalty);
+
+        // --- DESPERATION CURVE ---
+        if (actor.Hunger >= 0.5f && actor.Hunger < 0.85f)
+        {
+            baseModifier += 0.3f; // Desperate: Highly aggressive and dangerous
+        }
+        else if (actor.Hunger >= 0.85f)
+        {
+            baseModifier -= 0.4f; // Starving: Weak and lethargic
+        }
+
+        return baseModifier;
     }
 }

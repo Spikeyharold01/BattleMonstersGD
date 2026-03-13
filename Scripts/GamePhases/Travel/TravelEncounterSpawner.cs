@@ -569,16 +569,64 @@ public sealed class TravelEncounterSpawner
         var members = new List<CreatureStats>();
         int index = 0;
 
-        foreach(var strategicEntity in entities)
+         foreach(var strategicEntity in entities)
         {
             if (strategicEntity.CreatureDefinition == null) continue;
 
-            // Generate a group based on the biome settings, but forced to use the AI's exact template
-            int groupSize = RollGroupSize();
+            // Spawn the EXACT number of creatures that the Strategic AI tracked in this tribe!
+             int groupSize = strategicEntity.GroupSize;
+
+            CreatureStats troopLeader = null;
+
             for (int i = 0; i < groupSize; i++)
             {
                 CreatureStats spawned = SpawnOneCreature(strategicEntity.CreatureDefinition, targetZone.ZoneCenter, index, archetype);
-                if (spawned != null) members.Add(spawned);
+                if (spawned != null) 
+                {
+                    if (i == 0) 
+                    {
+                        troopLeader = spawned;
+                    }
+                    else if (troopLeader != null)
+                    {
+                        // Pack subordinates into the troop leader!
+                        spawned.Visible = false;
+                        var col = spawned.GetNodeOrNull<CollisionShape3D>("CollisionShape3D");
+                        if (col != null) col.Disabled = true;
+                        
+                        spawned.GetParent().RemoveChild(spawned);
+                        troopLeader.AddChild(spawned);
+                        spawned.Position = Vector3.Zero;
+                    }
+
+                    // 1. Apply Injuries (Silent HP Reduction)
+                    if (strategicEntity.InjuryState > 0)
+                    {
+                        int hpLost = Mathf.FloorToInt(spawned.Template.MaxHP * strategicEntity.InjuryState);
+                        if (hpLost > 0) spawned.TakeDamage(hpLost, "Untyped", null, null, null, null, true);
+                    }
+
+                    // 2. Apply Hunger Buffs/Debuffs
+                    if (strategicEntity.Hunger >= 0.85f)
+                    {
+                        // Starving: Apply Exhausted condition
+                        var exhausted = new StatusEffect_SO { EffectName = "Starving", ConditionApplied = Condition.Exhausted, DurationInRounds = 0 };
+                        spawned.MyEffects.AddEffect(exhausted, null);
+                        GD.Print($"[Spawn] A starving {spawned.Name} appears!");
+                    }
+                    else if (strategicEntity.Hunger >= 0.5f)
+                    {
+                        // Desperate: High Attack/Damage, Low Defense
+                        var desperate = new StatusEffect_SO { EffectName = "Desperate Hunger", DurationInRounds = 0 };
+                        desperate.Modifications.Add(new StatModification { StatToModify = StatToModify.AttackRoll, ModifierValue = 2, BonusType = BonusType.Morale });
+                        desperate.Modifications.Add(new StatModification { StatToModify = StatToModify.MeleeDamage, ModifierValue = 2, BonusType = BonusType.Morale });
+                        desperate.Modifications.Add(new StatModification { StatToModify = StatToModify.ArmorClass, ModifierValue = -2, BonusType = BonusType.Untyped });
+                        spawned.MyEffects.AddEffect(desperate, null);
+                        GD.Print($"[Spawn] A desperate, hungry {spawned.Name} appears!");
+                    }
+
+                    members.Add(spawned);
+                }
                 index++;
             }
         }

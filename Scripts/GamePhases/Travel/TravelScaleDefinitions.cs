@@ -84,6 +84,7 @@ public sealed class StrategicEntity
     public bool HasHomeTile;
     public Vector2I HomeTile;
     public bool IsPlayerParty;
+	public int GroupSize; // Tracks the exact number of creatures in this roaming pack
 }
 
 /// <summary>

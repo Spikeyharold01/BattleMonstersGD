@@ -184,7 +184,9 @@ public partial class TravelBiomeMapBuilder : Node
                 InjuryState = 0f,
                 HasHomeTile = rng.Randf() < 0.35f,
                 HomeTile = tile,
-                IsPlayerParty = false
+                IsPlayerParty = false,
+                // Spawn a group based on the template's average, +/- 20% variance
+                GroupSize = Mathf.Max(1, Mathf.RoundToInt(selectedTemplate.AverageGroupSize * rng.RandfRange(0.8f, 1.2f)))
             };
 
             tileData.StrategicEntities.Add(entity);

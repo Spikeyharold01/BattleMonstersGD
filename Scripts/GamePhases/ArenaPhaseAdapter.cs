@@ -1,5 +1,6 @@
 using Godot;
 using System;
+using System.Linq;
 
 /// <summary>
 /// Wraps the existing Arena setup so it can be treated like a phase.
@@ -38,13 +39,16 @@ public sealed class ArenaPhaseAdapter : IGamePhase
     /// - show arena root,
     /// - run optional enter callback.
     /// </summary>
-    public void EnterPhase(GamePhaseContext context)
+     public void EnterPhase(GamePhaseContext context)
     {
         ArenaStartContext startContext = context?.ConsumeArenaStartContext();
 
         if (_arenaRoot != null)
         {
             context.CreaturePersistence.RestoreAllCreatures(_arenaRoot);
+            
+            UnpackArmiesForCombat(context, _arenaRoot);
+
             _arenaRoot.Visible = true;
 
             // Store the transition payload at the arena root so existing arena systems can read it
@@ -89,5 +93,57 @@ public sealed class ArenaPhaseAdapter : IGamePhase
     public void UpdatePhase(double delta, GamePhaseContext context)
     {
         // Arena logic remains fully owned by existing arena systems.
+    }
+	private void UnpackArmiesForCombat(GamePhaseContext context, Node3D arenaRoot)
+    {
+        var tree = arenaRoot.GetTree();
+        if (tree == null) return;
+
+        // --- UNPACK ENEMY TROOPS ---
+        var enemies = tree.GetNodesInGroup("Enemy");
+        int enemyIndex = 0;
+        foreach (Node node in enemies)
+        {
+            if (node is CreatureStats enemy)
+            {
+                // Unparent them from the Troop Leader and attach to the Arena
+                if (enemy.GetParent() != arenaRoot)
+                {
+                    Vector3 originalGlobalPos = enemy.GlobalPosition;
+                    enemy.GetParent().RemoveChild(enemy);
+                    arenaRoot.AddChild(enemy);
+                    enemy.GlobalPosition = originalGlobalPos;
+                }
+
+                // Restore visibility and collision
+                enemy.Visible = true;
+                var col = enemy.GetNodeOrNull<CollisionShape3D>("CollisionShape3D");
+                if (col != null) col.Disabled = false;
+
+                // Spread them out using a spiral pattern so they don't overlap
+                float angle = enemyIndex * 2.4f; 
+                float radius = (Mathf.Sqrt(enemyIndex) * 5f); // 5ft spacing
+                Vector3 offset = new Vector3(Mathf.Cos(angle) * radius, 0, Mathf.Sin(angle) * radius);
+                
+                enemy.GlobalPosition += offset;
+                enemyIndex++;
+            }
+        }
+        
+        // --- UNPACK PLAYER ALLIES ---
+        var allies = context.CreaturePersistence.PersistentCreatures.Where(c => c.IsInGroup("Ally") && !c.IsInGroup("Player")).ToList();
+        var player = context.CreaturePersistence.PersistentCreatures.FirstOrDefault(c => c.IsInGroup("Player"));
+        Vector3 playerPos = player != null ? player.GlobalPosition : Vector3.Zero;
+        
+        int allyIndex = 1;
+        foreach(var ally in allies)
+        {
+            float angle = allyIndex * 2.4f; 
+            float radius = 5f + (Mathf.Sqrt(allyIndex) * 5f);
+            Vector3 offset = new Vector3(Mathf.Cos(angle) * radius, 0, Mathf.Sin(angle) * radius);
+            
+            ally.GlobalPosition = playerPos + offset;
+            allyIndex++;
+        }
     }
 }
